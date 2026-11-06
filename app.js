@@ -18,7 +18,7 @@ const T={sv:{
  moreTitle:"Mer",role_chef:"Chef",role_saljare:"Säljare",areas:"Områden",visited:"besökta",
  tmpl:"Meddelandemall för återbesök",tmplHelp:"{namn}, {säljare}, {adress} och {datum} fylls i automatiskt.",tmplChefOnly:"Bara chefen kan ändra mallen.",statuses:"Statusar",lang:"Språk",
  filterTitle:"Visa på kartan",onlyMine:"Bara mina leads",showAreas:"Visa områden",done:"Klar",
- tapPlace:"Flytta kartan så att nålen hamnar på huset.",longPress:"Tips: håll fingret på kartan för att släppa en nål direkt.",
+ tapPlace:"Flytta kartan så att nålen hamnar på huset.",longPress:"Tips: zooma in så syns husnumren – tryck på ett nummer för att lägga en nål med adressen ifylld. Du kan också hålla fingret på kartan.",
  tmplDefault:"Hej {namn}! Det är {säljare} från Fiskaren.nu. Jag kommer förbi på {adress} igen {datum} som vi pratade om. Passar det inte, svara bara på det här SMS:et. Hälsningar {säljare}",
  min:"min",h:"tim",d:"d",ago:"sedan",at:"kl",
  // auth
@@ -32,7 +32,7 @@ const T={sv:{
  team:"Team",approve:"Godkänn",deactivate:"Stäng av",activate:"Aktivera",pending:"Väntar",inactive:"Avstängd",roleLbl:"Roll",
  drawArea:"Rita nytt område",drawHelp:"Tryck på kartan för varje hörn av området.",undo:"Ångra",areaName:"Områdets namn",assigned:"Ansvarig säljare",saveArea:"Spara område",areaNeed3:"Sätt minst tre hörn.",delArea:"Ta bort",delAreaQ:"Ta bort området?",
  nobody:"Ingen",offline:"Offline – ändringar sparas och skickas när du har nät igen.",
- noAreas:"Inga områden än."},
+ noAreas:"Inga områden än.",satView:"Satellit",mapView:"Karta"},
 en:{
  tMap:"Map",tLeads:"Leads",tCal:"Calendar",tComp:"Compete",tMore:"More",searchPh:"Search address or name",
  cancel:"Cancel",placeHere:"Place here",
@@ -50,7 +50,7 @@ en:{
  moreTitle:"More",role_chef:"Manager",role_saljare:"Seller",areas:"Areas",visited:"visited",
  tmpl:"Revisit message template",tmplHelp:"{namn}, {säljare}, {adress} and {datum} are filled in automatically.",tmplChefOnly:"Only the manager can change the template.",statuses:"Statuses",lang:"Language",
  filterTitle:"Show on map",onlyMine:"Only my leads",showAreas:"Show areas",done:"Done",
- tapPlace:"Move the map so the pin sits on the house.",longPress:"Tip: press and hold the map to drop a pin directly.",
+ tapPlace:"Move the map so the pin sits on the house.",longPress:"Tip: zoom in to see house numbers – tap a number to drop a pin with the address filled in. You can also press and hold the map.",
  tmplDefault:"Hi {namn}! It's {säljare} from Fiskaren.nu. I'll stop by {adress} again {datum} as we discussed. If it doesn't suit you, just reply to this text. Best, {säljare}",
  min:"min",h:"h",d:"d",ago:"ago",at:"at",
  login:"Log in",register:"Create account",yourName:"Your name",password:"Password",pwHint:"At least 6 characters",forgot:"Forgot password?",resetSent:"We sent you an email to choose a new password.",
@@ -62,7 +62,7 @@ en:{
  team:"Team",approve:"Approve",deactivate:"Switch off",activate:"Activate",pending:"Waiting",inactive:"Switched off",roleLbl:"Role",
  drawArea:"Draw new area",drawHelp:"Tap the map at each corner of the area.",undo:"Undo",areaName:"Area name",assigned:"Assigned seller",saveArea:"Save area",areaNeed3:"Set at least three corners.",delArea:"Delete",delAreaQ:"Delete the area?",
  nobody:"Nobody",offline:"Offline – changes are saved and sent when you're back online.",
- noAreas:"No areas yet."}};
+ noAreas:"No areas yet.",satView:"Satellite",mapView:"Map"}};
 
 const CHEF_EMAILS=["hej@fiskaren.nu","karen@fiskaren.nu"];
 const STATUS=[
@@ -205,7 +205,7 @@ function startData(){
   dataUnsubs.push(db.collection("users").onSnapshot(q=>{S.users=q.docs.map(d=>Object.assign({id:d.id},d.data()));renderTab();drawAreas()},e=>console.error(e)));
   dataUnsubs.push(db.collection("leads").onSnapshot(q=>{
     S.leads=q.docs.map(d=>{const x=Object.assign({id:d.id},d.data());x.hist=x.hist||[];return x});
-    drawPins();statStrip();if(tab!=="map"&&tab!=="more"&&$("sheet").hidden){const y=$("v-"+tab).scrollTop;renderTab();$("v-"+tab).scrollTop=y}
+    drawPins();drawAddresses();statStrip();if(tab!=="map"&&tab!=="more"&&$("sheet").hidden){const y=$("v-"+tab).scrollTop;renderTab();$("v-"+tab).scrollTop=y}
   },e=>console.error(e)));
   dataUnsubs.push(db.collection("areas").onSnapshot(q=>{S.areas=q.docs.map(d=>{const x=d.data();return {id:d.id,name:x.name,rep:x.rep,color:x.color,poly:(x.poly||[]).map(p=>[p.lat,p.lng])}});drawAreas();if(tab==="more")moreView()},e=>console.error(e)));
   dataUnsubs.push(db.collection("settings").doc("main").onSnapshot(s=>{S.tmpl=(s.data()||{}).tmpl||null},e=>console.error(e)));
@@ -221,15 +221,55 @@ function pinIcon(l){
   const s=ST[l.status]||ST.ny;
   const hidden=P.filter.hide.includes(l.status)||(P.filter.mine&&l.owner!==S.uid);
   const cls="pin"+(l.status==="ny"?" new":"")+(l.id===selId?" sel":"")+(hidden?" dim":"");
-  return L.divIcon({className:"",html:`<div class="${cls}" style="--c:${s.c}"><span>${s.ic}</span></div>`,iconSize:[26,26],iconAnchor:[13,30]});
+  return L.divIcon({className:"",html:`<div class="${cls}" style="--c:${s.c}"><span>${s.ic}</span></div>${l.num?`<b class="pnum">${esc(l.num)}</b>`:""}`,iconSize:[26,26],iconAnchor:[13,30]});
 }
 function initMap(){
   if(map)return;
   map=L.map("map",{zoomControl:false}).setView(CENTER,17);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>'}).addTo(map);
+  BASES.map=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>'});
+  BASES.sat=L.layerGroup([L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:20,maxNativeZoom:19,attribution:"Bild © Esri, Maxar, Earthstar Geographics"}),
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:'© OpenStreetMap © CARTO'})]);
+  setBase(P.base||"map");
+  addrLayer=L.layerGroup().addTo(map);
+  map.on("moveend zoomend",()=>{clearTimeout(addrT);addrT=setTimeout(loadAddresses,350);$("map").classList.toggle("zfar",map.getZoom()<18)});
+  $("map").classList.toggle("zfar",map.getZoom()<18);
   map.on("contextmenu",e=>{if(!placing&&!drawing)newLeadAt(e.latlng.lat,e.latlng.lng)});
   map.on("click",e=>{$("results").hidden=true;$("statstrip").hidden=false;if(drawing){drawing.pts.push([e.latlng.lat,e.latlng.lng]);drawPreview()}});
   setTimeout(()=>map.invalidateSize(),50);
+}
+/* ---------- base layer + house numbers ---------- */
+const BASES={};let curBase=null,addrLayer=null,addrT=null;const addrs=new Map();const fetched=[];let addrBusy=false;
+function setBase(k){if(!map)return;if(curBase)map.removeLayer(BASES[curBase]);curBase=k;BASES[k].addTo(map);P.base=k;savePrefs();
+  const b=$("baseBtn");if(b){b.setAttribute("aria-pressed",k==="sat");b.title=k==="sat"?t("mapView"):t("satView")}}
+const covered=(s,w,n,e)=>fetched.some(f=>s>=f[0]&&w>=f[1]&&n<=f[2]&&e<=f[3]);
+async function loadAddresses(){
+  if(!map||!addrLayer)return;
+  if(map.getZoom()<17){addrLayer.clearLayers();return}
+  const b=map.getBounds().pad(0.3);const s=b.getSouth(),w=b.getWest(),n=b.getNorth(),e=b.getEast();
+  if(!covered(s,w,n,e)&&!addrBusy&&navigator.onLine){
+    addrBusy=true;
+    const q=`[out:json][timeout:20];(node["addr:housenumber"](${s},${w},${n},${e});way["addr:housenumber"](${s},${w},${n},${e}););out center 800;`;
+    try{
+      const r=await fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}});
+      if(r.ok){const j=await r.json();(j.elements||[]).forEach(el=>{const tg=el.tags||{};const lat=el.lat||(el.center&&el.center.lat),lng=el.lon||(el.center&&el.center.lon);if(!lat||!tg["addr:housenumber"])return;
+        addrs.set(el.type+el.id,{lat,lng,street:tg["addr:street"]||"",num:tg["addr:housenumber"]})});fetched.push([s,w,n,e])}
+    }catch(x){console.warn("adresser",x)}
+    addrBusy=false;
+  }
+  drawAddresses();
+}
+function drawAddresses(){
+  if(!addrLayer)return;addrLayer.clearLayers();
+  if(!map||map.getZoom()<17)return;
+  const b=map.getBounds();
+  const taken=new Set(S.leads.map(l=>((l.street||"")+"|"+(l.num||"")).toLowerCase()));
+  addrs.forEach(a=>{
+    if(!b.contains([a.lat,a.lng]))return;
+    if(taken.has((a.street+"|"+a.num).toLowerCase()))return;
+    const m=L.marker([a.lat,a.lng],{icon:L.divIcon({className:"",html:`<div class="hn">${esc(a.num)}</div>`,iconSize:[30,20],iconAnchor:[15,10]}),title:(a.street+" "+a.num).trim(),zIndexOffset:-500});
+    m.on("click",()=>{if(!drawing&&!placing)newLeadAt(a.lat,a.lng,{street:a.street,num:a.num})});
+    addrLayer.addLayer(m);
+  });
 }
 function drawAreas(){
   if(!map)return;areaLayers.forEach(x=>map.removeLayer(x));areaLayers=[];
@@ -353,12 +393,13 @@ async function reverseGeo(lat,lng){
     return {street:a.road||a.pedestrian||a.footway||"",num:a.house_number||""};
   }catch(e){return null}
 }
-function newLeadAt(lat,lng){
+function newLeadAt(lat,lng,pre){
   const ref=db.collection("leads").doc();
-  const l={id:ref.id,lat,lng,street:"",num:"",first:"",last:"",phone:"",email:"",note:"",status:"ny",revisit:null,meeting:null,owner:S.uid,created:Date.now(),updated:Date.now(),hist:[]};
+  const l={id:ref.id,lat,lng,street:pre?pre.street:"",num:pre?pre.num:"",first:"",last:"",phone:"",email:"",note:"",status:"ny",revisit:null,meeting:null,owner:S.uid,created:Date.now(),updated:Date.now(),hist:[]};
   S.leads.push(l);
   const {id,...doc}=l;ref.set(doc).catch(err);
-  drawPins();openLead(l.id);
+  drawPins();drawAddresses();openLead(l.id);
+  if(pre&&pre.street&&pre.num)return;
   reverseGeo(lat,lng).then(a=>{
     if(!a||(!a.street&&!a.num))return;
     const patch={};if(!l.street&&a.street)patch.street=a.street;if(!l.num&&a.num)patch.num=a.num;
@@ -371,6 +412,7 @@ $("addBtn").onclick=startPlacing;
 $("placeCancel").onclick=endPlacing;
 $("placeOk").onclick=()=>{const c=map.getCenter();endPlacing();newLeadAt(c.lat,c.lng)};
 $("locBtn").onclick=()=>locate(true);
+$("baseBtn").onclick=()=>setBase(curBase==="sat"?"map":"sat");
 
 /* ================= draw area (chef) ================= */
 let drawLayer=null;

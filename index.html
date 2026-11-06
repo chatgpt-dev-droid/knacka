@@ -81,6 +81,11 @@ main{flex:1;min-height:0;position:relative}
 .pin.new span{color:var(--muted)}
 .pin.sel{transform:rotate(-45deg) scale(1.35)}
 .pin.dim{opacity:.35}
+.pnum{position:absolute;left:50%;top:30px;transform:translateX(-50%);font-size:10.5px;font-weight:800;color:#10252d;background:rgba(255,255,255,.92);border-radius:5px;padding:0 4px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.25);pointer-events:none}
+.zfar .pnum{display:none}
+.hn{min-width:22px;height:18px;padding:0 4px;border-radius:6px;background:rgba(255,255,255,.95);border:1.5px solid #8d9aa6;color:#10252d;font-size:10.5px;font-weight:800;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.2);white-space:nowrap}
+.hn:active{background:#0b6e7f;color:#fff;border-color:#0b6e7f}
+#baseBtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .me-dot{width:16px;height:16px;border-radius:50%;background:#2d7ff9;border:3px solid #fff;box-shadow:0 0 0 6px rgba(45,127,249,.25)}
 
 /* map overlays */
@@ -234,6 +239,7 @@ input[type=password]{width:100%;background:var(--bg);border:1px solid var(--line
     <div class="statstrip gut" id="statstrip"></div>
     <div class="results gut" id="results" hidden><div class="box" id="resultsBox"></div></div>
     <div class="fabs" id="fabs">
+      <button class="iconbtn" id="baseBtn" aria-label="Satellit" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 10 5-10 5L2 7l10-5z"/><path d="m2 12 10 5 10-5"/><path d="m2 17 10 5 10-5"/></svg></button>
       <button class="iconbtn" id="locBtn" aria-label="Min position"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
       <button class="fab" id="addBtn" aria-label="Ny lead"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
