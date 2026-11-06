@@ -33,6 +33,12 @@ const T={sv:{
  drawArea:"Rita nytt område",drawHelp:"Tryck på kartan för varje hörn av området.",undo:"Ångra",undone:"Ångrat",areaName:"Områdets namn",assigned:"Ansvarig säljare",saveArea:"Spara område",areaNeed3:"Sätt minst tre hörn.",delArea:"Ta bort",delAreaQ:"Ta bort området?",
  nobody:"Ingen",offline:"Offline – ändringar sparas och skickas när du har nät igen.",
  noAreas:"Inga områden än.",satView:"Satellit",mapView:"Karta",
+ details:"Detaljer",bookMeeting:"Boka möte",setRevisit:"Återbesök",addNotePh:"Skriv en anteckning…",assignedTo:"Ansvarig",info:"Info",activity:"Aktivitet",back:"Tillbaka",
+ company:"Företag",address:"Adress",apt:"Lgh",zip:"Postnummer",city:"Ort",statusH:"Status",
+ evAssign:"Ny ansvarig",evAssignTo:"Tilldelad",evCreate:"Lead skapad",evStatus:"Status:",evNote:"Anteckning",noActivity:"Ingen aktivitet än.",noLocation:"Ingen plats",by:"av",
+ stEditH:"Statusar",stEditHelp:"Namn, färg, ikon och vad statusen betyder. Ändringen gäller hela teamet.",stAdd:"Lägg till status",stSave:"Spara statusar",stName:"Namn",stColor:"Färg",stIcon:"Ikon",stType:"Betyder",
+ fl_sale:"Försäljning",fl_lead:"Intresserad/lead",fl_revisit:"Återbesök",fl_closed:"Knacka inte igen",fl_none:"Övrigt",stDel:"Ta bort",stNeedName:"Varje status behöver ett namn.",
+ mapTitle:"Knacka",list:"Lista",searchH:"Sök",
  notes:"Anteckningar",addNote:"Spara anteckning",noteAdded:"Anteckning sparad",noNotes:"Inga anteckningar än.",
  gcal:"+ Google-kalender",ical:"+ iPhone-kalender",revToday:"återbesök idag",
  planRoute:"Planera rutt",routeStops:"stopp",openGmaps:"Öppna i Google Maps",endRoute:"Avsluta rutt",routeMax:"Google Maps tar max 10 stopp åt gången – resten visas på kartan.",noStops:"Inga stopp med plats den här dagen.",
@@ -67,16 +73,78 @@ en:{
  drawArea:"Draw new area",drawHelp:"Tap the map at each corner of the area.",undo:"Undo",undone:"Undone",areaName:"Area name",assigned:"Assigned seller",saveArea:"Save area",areaNeed3:"Set at least three corners.",delArea:"Delete",delAreaQ:"Delete the area?",
  nobody:"Nobody",offline:"Offline – changes are saved and sent when you're back online.",
  noAreas:"No areas yet.",satView:"Satellite",mapView:"Map",
+ details:"Details",bookMeeting:"Book meeting",setRevisit:"Revisit",addNotePh:"Write a note…",assignedTo:"Assigned to",info:"Info",activity:"Activity",back:"Back",
+ company:"Business",address:"Address",apt:"Apt",zip:"Postal code",city:"City",statusH:"Status",
+ evAssign:"Reassigned",evAssignTo:"Assigned to",evCreate:"Lead created",evStatus:"Status:",evNote:"Note",noActivity:"No activity yet.",noLocation:"No location",by:"by",
+ stEditH:"Statuses",stEditHelp:"Name, colour, icon and what the status means. Changes apply to the whole team.",stAdd:"Add status",stSave:"Save statuses",stName:"Name",stColor:"Colour",stIcon:"Icon",stType:"Means",
+ fl_sale:"Sale",fl_lead:"Interested/lead",fl_revisit:"Revisit",fl_closed:"Don't knock again",fl_none:"Other",stDel:"Delete",stNeedName:"Every status needs a name.",
+ mapTitle:"Knacka",list:"List",searchH:"Search",
  notes:"Notes",addNote:"Save note",noteAdded:"Note saved",noNotes:"No notes yet.",
  gcal:"+ Google Calendar",ical:"+ iPhone calendar",revToday:"revisits today",
  planRoute:"Plan route",routeStops:"stops",openGmaps:"Open in Google Maps",endRoute:"End route",routeMax:"Google Maps takes at most 10 stops at a time – the rest are shown on the map.",noStops:"No stops with a location this day.",
  impTitle:"Import from SalesRabbit",impHelp:"Export your leads from SalesRabbit as a CSV file (Leads → select all → Export) and choose the file here. Duplicates are skipped.",impPick:"Choose CSV file",impFound:"rows in the file",impNew:"new leads",impDup:"already exist",impNoPos:"have no coordinates – the address is looked up (about 1 s each)",impGo:"Import",impBusy:"Importing…",impGeo:"Looking up addresses",impDone:"Done! Imported",impFail:"could not be placed on the map",impCols:"Columns found",impBad:"Couldn't read the file. Is it a CSV file from SalesRabbit?"}};
 
 const CHEF_EMAILS=["hej@fiskaren.nu","karen@fiskaren.nu"];
-const STATUS=[
- {k:"borta",ic:"–",c:"var(--st-borta)"},{k:"nej",ic:"✕",c:"var(--st-nej)"},{k:"igen",ic:"↻",c:"var(--st-igen)"},{k:"int",ic:"★",c:"var(--st-int)"},
- {k:"mote",ic:"◷",c:"var(--st-mote)"},{k:"kund",ic:"✓",c:"var(--st-kund)"},{k:"aldrig",ic:"!",c:"var(--st-aldrig)"}];
-const ST=Object.fromEntries(STATUS.map(s=>[s.k,s]));ST.ny={k:"ny",ic:"",c:"var(--st-ny)"};
+/* ---------- status system (editable by chef) ---------- */
+const ICON_PATHS={
+ crown:'<path d="M3.5 17.5h17"/><path d="M4.5 7.5 8.5 11 12 5l3.5 6 4-3.5-1.6 9.5H6.1z"/>',
+ star:'<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+ bag:'<path d="M9.2 4.5h5.6l-1.4 2.6h-2.8z"/><path d="M8.6 7.1h6.8c2.6 2.2 4.1 5 4.1 7.8 0 2.9-2.4 4.6-7.5 4.6s-7.5-1.7-7.5-4.6c0-2.8 1.5-5.6 4.1-7.8z"/><path d="M13.8 11.3c-.4-.6-1-.9-1.8-.9-1.1 0-1.8.6-1.8 1.4 0 1.9 3.7.9 3.7 2.8 0 .8-.8 1.4-1.9 1.4-.8 0-1.5-.3-1.9-.9M12 9.6v.8M12 16v.8"/>',
+ check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+ home:'<path d="M4 11 12 4.5l8 6.5"/><path d="M6 9.5V19.5h12V9.5"/><path d="M10 19.5v-5h4v5"/>',
+ refresh:'<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.5H15"/>',
+ alert:'<path d="M12 5.5v8.5"/><path d="M12 18.4v.1"/>',
+ lock:'<rect x="5.5" y="10.5" width="13" height="9" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
+ x:'<path d="M7 7l10 10M17 7 7 17"/>',
+ minus:'<path d="M6.5 12h11"/>',
+ clock:'<circle cx="12" cy="12" r="7.5"/><path d="M12 8v4.2l2.8 1.8"/>',
+ door:'<path d="M6.5 20V4.5h9V20"/><path d="M4.5 20h15"/><path d="M12.6 12.3v.1"/>',
+ heart:'<path d="M12 19.5s-7-4.3-7-9.4A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7 2.1c0 5.1-7 9.4-7 9.4z"/>',
+ fish:'<path d="M3.5 12c3-4.5 9-6 13.5-1.5L20.5 7v10l-3.5-3.5C12.5 18 6.5 16.5 3.5 12z"/><path d="M8 11.2v.1"/>',
+ phone:'<path d="M20.5 16.4v2.6a1.8 1.8 0 0 1-2 1.8A17.6 17.6 0 0 1 3.2 5.5a1.8 1.8 0 0 1 1.8-2h2.6a1.8 1.8 0 0 1 1.8 1.5c.1.8.3 1.6.6 2.4a1.8 1.8 0 0 1-.4 1.9l-1.1 1.1a14.4 14.4 0 0 0 5.1 5.1l1.1-1.1a1.8 1.8 0 0 1 1.9-.4c.8.3 1.6.5 2.4.6a1.8 1.8 0 0 1 1.5 1.8z"/>',
+ sms:'<path d="M20 15.5a1.8 1.8 0 0 1-1.8 1.8H8l-4 3.2V5.8A1.8 1.8 0 0 1 5.8 4h12.4A1.8 1.8 0 0 1 20 5.8z"/><path d="M8 9.5h8M8 12.8h5"/>',
+ mail:'<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/>',
+ nav:'<path d="m3.5 11 17-7.5-7.5 17-2-7.5z"/>',
+ cal:'<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+ note:'<path d="M5 4.5h10.5l3.5 3.5v11.5H5z"/><path d="M8.5 11h7M8.5 14.5h5"/>',
+ user:'<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ back:'<path d="m15 5-7 7 7 7"/>',
+ search:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+ route:'<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18h7.3a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H15.8"/>',
+ layers:'<path d="m12 3.5 8.5 4.5-8.5 4.5L3.5 8z"/><path d="m3.5 12 8.5 4.5 8.5-4.5"/><path d="m3.5 16 8.5 4.5 8.5-4.5"/>',
+ target:'<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.6"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5"/>',
+ filter:'<path d="M4 6.5h16M7 12h10M10 17.5h4"/>',
+ pin:'<path d="M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+ trash:'<path d="M5 7h14M9.5 7V4.5h5V7M7 7l1 12.5h8L17 7"/>',
+ locoff:'<path d="M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11z"/><path d="M12 7.5v3.5"/><path d="M12 13.6v.1"/>'};
+const ICON_NAMES=["crown","star","bag","check","home","refresh","alert","lock","x","minus","clock","door","heart","fish","phone"];
+function svgI(name,size,sw){return `<svg width="${size||22}" height="${size||22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||2.2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name]||""}</svg>`}
+// flag: sale | lead | revisit | closed | none
+const DEFAULT_STATUSES=[
+ {k:"abo",label:"ABO",color:"#1d7a2a",icon:"crown",flag:"sale"},
+ {k:"sk",label:"sk",color:"#e0399a",icon:"star",flag:"lead"},
+ {k:"sald",label:"Såld",color:"#6cc95a",icon:"bag",flag:"sale"},
+ {k:"k",label:"K",color:"#11a8a6",icon:"check",flag:"none"},
+ {k:"p",label:"P",color:"#3fc4bc",icon:"home",flag:"none"},
+ {k:"kt",label:"KT",color:"#6cc95a",icon:"refresh",flag:"revisit"},
+ {k:"lead",label:"Lead",color:"#11a8a6",icon:"alert",flag:"lead"},
+ {k:"kih",label:"KIH",color:"#e9a800",icon:"lock",flag:"closed"}];
+const LEGACY_STATUSES=[
+ {k:"borta",label:"Inte hemma",color:"#8d9aa6",icon:"minus",flag:"none"},{k:"nej",label:"Nej tack",color:"#d64541",icon:"x",flag:"closed"},
+ {k:"igen",label:"Kom tillbaka",color:"#e39b14",icon:"refresh",flag:"revisit"},{k:"int",label:"Intresserad",color:"#7b5bd6",icon:"star",flag:"lead"},
+ {k:"mote",label:"Möte bokat",color:"#2d7ff9",icon:"clock",flag:"lead"},{k:"kund",label:"Kund",color:"#1f9d55",icon:"check",flag:"sale"},
+ {k:"aldrig",label:"Knacka ej",color:"#2b2f33",icon:"lock",flag:"closed"}];
+const ST_NY={k:"ny",label:"",color:"#ffffff",icon:"",flag:"none"};
+const stList=()=>(S.statuses&&S.statuses.length?S.statuses:DEFAULT_STATUSES);
+function st(k){if(!k||k==="ny")return ST_NY;return stList().find(s=>s.k===k)||LEGACY_STATUSES.find(s=>s.k===k)||{k,label:k,color:"#8d9aa6",icon:"minus",flag:"none"}}
+const stLabel=k=>k==="ny"?t("st_ny"):st(k).label;
+const isSale=k=>!!k&&st(k).flag==="sale";
+const isLead=k=>!!k&&st(k).flag==="lead";
+const isRevisitSt=k=>!!k&&st(k).flag==="revisit";
+const isClosed=k=>!!k&&(st(k).flag==="closed"||st(k).flag==="sale");
+function stDot(k,size){const s=st(k);const sz=size||34;return k==="ny"||!k?`<span class="sdot new" style="width:${sz}px;height:${sz}px"></span>`:`<span class="sdot" style="--c:${s.color};width:${sz}px;height:${sz}px">${svgI(s.icon,Math.round(sz*.52),2.6)}</span>`}
+
 const AREA_COLS=["#0b6e7f","#e39b14","#7b5bd6","#1f9d55","#d64541","#2d7ff9"];
 const CENTER=[59.2622,18.0128];
 const DAY=864e5;
@@ -105,7 +173,7 @@ function fdate(s){if(!s)return"";const d=new Date(s+"T12:00:00");return d.toLoca
 function ftime(ts){return new Date(ts).toLocaleTimeString(loc(),{hour:"2-digit",minute:"2-digit"})}
 function fdt(ts){return new Date(ts).toLocaleDateString(loc(),{day:"numeric",month:"short"})+" "+ftime(ts)}
 const lastVisit=l=>l.hist&&l.hist.length?l.hist[l.hist.length-1].t:0;
-let here=null;
+let here=null,hereT=0;
 function dist(l){const p=here||CENTER;const dy=(l.lat-p[0])*111320,dx=(l.lng-p[1])*111320*Math.cos(p[0]*Math.PI/180);return Math.sqrt(dx*dx+dy*dy)}
 const fdist=m=>m<1000?Math.round(m/10)*10+" m":(m/1000).toFixed(1).replace(".",",")+" km";
 function toast(msg,action,fn){const e=$("toast");e.innerHTML="";const sp=document.createElement("span");sp.textContent=msg;e.appendChild(sp);
@@ -218,10 +286,11 @@ function startData(){
     S.leads=q.docs.map(d=>{const data=d.data();data.hist=data.hist||[];const ex=byId.get(d.id);
       if(ex){Object.keys(ex).forEach(k=>{if(k!=="id"&&!(k in data))delete ex[k]});Object.assign(ex,data);if(pend&&pend.l===ex)Object.assign(ex,pend.patch);return ex}
       return Object.assign({id:d.id},data)});
+    if(openId){const ae=document.activeElement;if(!ae||!/INPUT|TEXTAREA|SELECT/.test(ae.tagName))rerenderLead(openId)}
     drawPins();drawAddresses();statStrip();if(tab!=="map"&&tab!=="more"&&$("sheet").hidden){const y=$("v-"+tab).scrollTop;renderTab();$("v-"+tab).scrollTop=y}
   },e=>console.error(e)));
   dataUnsubs.push(db.collection("areas").onSnapshot(q=>{S.areas=q.docs.map(d=>{const x=d.data();return {id:d.id,name:x.name,rep:x.rep,color:x.color,poly:(x.poly||[]).map(p=>[p.lat,p.lng])}});drawAreas();if(tab==="more")moreView()},e=>console.error(e)));
-  dataUnsubs.push(db.collection("settings").doc("main").onSnapshot(s=>{S.tmpl=(s.data()||{}).tmpl||null},e=>console.error(e)));
+  dataUnsubs.push(db.collection("settings").doc("main").onSnapshot(s=>{const d=s.data()||{};S.tmpl=d.tmpl||null;S.statuses=Array.isArray(d.statuses)&&d.statuses.length?d.statuses:null;Object.values(markers).forEach(m=>m.__k=null);drawPins();if(tab==="more")moreView()},e=>console.error(e)));
   locate(false);
 }
 window.addEventListener("online",()=>$("offline").hidden=true);
@@ -231,10 +300,10 @@ if(!navigator.onLine)$("offline").hidden=false;
 /* ================= map ================= */
 let map=null,markers={},areaLayers=[],selId=null,meMarker=null,placing=false,drawing=null;
 function pinIcon(l){
-  const s=ST[l.status]||ST.ny;
+  const s=st(l.status);
   const hidden=P.filter.hide.includes(l.status)||(P.filter.mine&&l.owner!==S.uid);
-  const cls="pin"+(l.status==="ny"?" new":"")+(l.id===selId?" sel":"")+(hidden?" dim":"");
-  return L.divIcon({className:"",html:`<div class="${cls}" style="--c:${s.c}"><span>${s.ic}</span></div>${l.num?`<b class="pnum">${esc(l.num)}</b>`:""}`,iconSize:[26,26],iconAnchor:[13,30]});
+  const cls="rpin"+(l.status==="ny"?" new":"")+(l.id===selId?" sel":"")+(hidden?" dim":"");
+  return L.divIcon({className:"",html:`<div class="${cls}" style="--c:${s.color}">${l.status==="ny"?"":svgI(s.icon,15,2.8)}</div>${l.num?`<b class="pnum">${esc(l.num)}</b>`:""}`,iconSize:[30,30],iconAnchor:[15,15]});
 }
 function iconKey(l){return [l.status,l.id===selId,P.filter.hide.includes(l.status)||(P.filter.mine&&l.owner!==S.uid),l.num||""].join("|")}
 function refreshPin(id){const l=S.leads.find(x=>x.id===id);const m=markers[id];if(l&&m){const k=iconKey(l);if(m.__k!==k){m.setIcon(pinIcon(l));m.__k=k}}}
@@ -313,24 +382,24 @@ function drawPins(){
 function locate(fly){
   if(!navigator.geolocation){if(fly&&map)map.flyTo(CENTER,17);return}
   navigator.geolocation.getCurrentPosition(p=>{
-    here=[p.coords.latitude,p.coords.longitude];
+    here=[p.coords.latitude,p.coords.longitude];hereT=Date.now();
     if(map){if(!meMarker)meMarker=L.marker(here,{icon:L.divIcon({className:"",html:'<div class="me-dot"></div>',iconSize:[16,16],iconAnchor:[8,8]}),interactive:false,zIndexOffset:1000}).addTo(map);else meMarker.setLatLng(here);if(fly||!locate.done)map.setView(here,17);locate.done=true}
   },()=>{if(fly&&map)map.flyTo(CENTER,17)},{enableHighAccuracy:true,timeout:10000,maximumAge:30000});
 }
-if(navigator.geolocation){try{navigator.geolocation.watchPosition(p=>{here=[p.coords.latitude,p.coords.longitude];if(meMarker)meMarker.setLatLng(here)},()=>{},{enableHighAccuracy:true,maximumAge:15000})}catch(e){}}
+if(navigator.geolocation){try{navigator.geolocation.watchPosition(p=>{here=[p.coords.latitude,p.coords.longitude];hereT=Date.now();if(meMarker)meMarker.setLatLng(here)},()=>{},{enableHighAccuracy:true,maximumAge:15000})}catch(e){}}
 
 /* ================= stats strip ================= */
 function statStrip(){
   if(!S.me)return;
   const st=new Date();st.setHours(0,0,0,0);const s0=st.getTime();let k=0,ld=0,sa=0;
-  S.leads.forEach(l=>l.hist.forEach(h=>{if(h.rep===S.uid&&h.t>=s0){k++;if(h.s==="int"||h.s==="mote")ld++;if(h.s==="kund")sa++}}));
+  S.leads.forEach(l=>l.hist.forEach(h=>{if(h.s&&h.rep===S.uid&&h.t>=s0){k++;if(isLead(h.s))ld++;if(isSale(h.s))sa++}}));
   $("statstrip").innerHTML=`<span class="stat"><span class="av" style="width:22px;height:22px;font-size:11px">${esc((S.me.name||"?")[0])}</span>${t("today")}</span>
     <span class="stat"><b>${k}</b> ${t("knocks")}</span><span class="stat"><b>${ld}</b> ${t("leadsW")}</span><span class="stat"><b>${sa}</b> ${t("sales")}</span>`;
-  const due=S.leads.filter(l=>l.revisit&&l.revisit<=todayStr()&&!["kund","aldrig","nej"].includes(l.status)&&l.owner===S.uid).length;
+  const due=S.leads.filter(l=>l.revisit&&l.revisit<=todayStr()&&!isClosed(l.status)&&l.owner===S.uid).length;
   if(due)$("statstrip").insertAdjacentHTML("beforeend",`<button class="stat due" id="dueChip">↻ <b>${due}</b> ${t("revToday")}</button>`);
   if($("dueChip"))$("dueChip").onclick=()=>{calDay=todayStr();showTab("cal")};
   $("calCount").hidden=!due;$("calCount").textContent=due;
-  $("filterBadge").hidden=!(P.filter.hide.length||P.filter.mine);
+  const fc=P.filter.hide.length+(P.filter.mine?1:0);$("filterBadge").hidden=!fc;$("filterBadge").textContent=fc;
   const pend=isChef()?S.users.filter(u=>!u.active&&!u.off).length:0;
   $("moreCount").hidden=!pend;$("moreCount").textContent=pend;
 }
@@ -348,7 +417,8 @@ function closeSheet(){
   flushSave();
   const sh=$("sheet"),sc=$("scrim");sh.classList.remove("open");sc.classList.remove("open");sheetKey=null;
   clearTimeout(sheetHideT);sheetHideT=setTimeout(()=>{sh.hidden=true;sc.hidden=true},230);
-  if(selId){const id=selId;selId=null;refreshPin(id)}
+  if(openMode==="peek"){openMode=null;openId=null}
+  if(selId&&openMode!=="detail"){const id=selId;selId=null;refreshPin(id)}
   if(tab!=="map"&&tab!=="more")renderTab();
 }
 /* saving while typing */
@@ -361,7 +431,7 @@ $("scrim").onclick=closeSheet;
   sh.addEventListener("touchstart",e=>{const tg=e.target;if(sh.scrollTop>0&&!tg.closest(".grab"))return;if(tg.closest("input,textarea,select,button,a"))return;y0=e.touches[0].clientY;dy=0;sh.style.transition="none"},{passive:true});
   sh.addEventListener("touchmove",e=>{if(y0==null)return;dy=Math.max(0,e.touches[0].clientY-y0);if(dy>0)sh.style.transform=`translateY(${dy}px)`},{passive:true});
   sh.addEventListener("touchend",()=>{if(y0==null)return;sh.style.transition="";sh.style.transform="";if(dy>90)closeSheet();y0=null})})();
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(openMode==="detail")closeDetail();else closeSheet()}});
 const icon={
  call:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
  sms:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
@@ -370,78 +440,163 @@ const icon={
  x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>'};
 function toLocalInput(ts){const d=new Date(ts);return dstr(d)+"T"+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
 
+/* ================= lead: quick card + details ================= */
+const posNow=()=>here&&hereT&&Date.now()-hereT<180000?{lat:here[0],lng:here[1]}:{};
+const curLead=id=>S.leads.find(x=>x.id===id);
+const initials=n=>String(n||"?").split(/\s+/).map(x=>x[0]||"").join("").slice(0,2).toUpperCase();
+function fullAddr(l){const a=addr(l);const tail=[l.zip,l.city].filter(Boolean).join(" ");return tail&&l.street?a+", "+tail:a}
+function allNotes(l){const n=(l.notes||[]).slice();if(l.note)n.unshift({t:l.created||0,rep:l.owner,text:l.note,legacy:1});return n}
+
+function setStatus(l,k){
+  flushSave();try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}
+  const h=Object.assign({t:Date.now(),rep:S.uid,s:k},posNow());
+  const before={status:l.status,revisit:l.revisit||null,owner:l.owner||null};
+  const patch={status:k};
+  if(isRevisitSt(k)&&!l.revisit)patch.revisit=dstr(new Date(Date.now()+14*DAY));
+  if(isClosed(k))patch.revisit=null;
+  if(!l.owner)patch.owner=S.uid;
+  l.hist.push(h);Object.assign(l,patch);patch.updated=Date.now();patch.hist=FV.arrayUnion(h);
+  db.collection("leads").doc(l.id).set(patch,{merge:true}).catch(err);
+  refreshPin(l.id);statStrip();
+  toast(t("statusSet")+stLabel(k),t("undo"),()=>{l.hist=l.hist.filter(x=>x!==h);Object.assign(l,before);
+    db.collection("leads").doc(l.id).set(Object.assign({},before,{hist:FV.arrayRemove(h),updated:Date.now()}),{merge:true}).catch(err);refreshPin(l.id);statStrip();rerenderLead(l.id);toast(t("undone"))});
+}
+function addNoteTo(l,txt){
+  const n=Object.assign({t:Date.now(),rep:S.uid,text:txt},posNow());
+  l.notes=(l.notes||[]).concat(n);delete noteDraft[l.id];
+  db.collection("leads").doc(l.id).set({notes:FV.arrayUnion(n),updated:Date.now()},{merge:true}).catch(err);toast(t("noteAdded"));
+}
+function statusRow(l){return `<div class="strow" role="group" aria-label="Status">${stList().map(x=>`<button class="stb" data-st="${x.k}" aria-pressed="${l.status===x.k}">${stDot(x.k,56)}<span>${esc(x.label)}</span></button>`).join("")}</div>`}
+function bindStatusRow(root,l){root.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{setStatus(l,b.dataset.st);rerenderLead(l.id)})}
+function actionRow(l){return `<div class="actrow">
+  <a class="act" href="${telHref(l.phone)}" aria-disabled="${!l.phone}" aria-label="${t("call")}">${svgI("phone",22)}<span>${t("call")}</span></a>
+  <a class="act" href="${smsHref(l.phone,"")}" aria-disabled="${!l.phone}" aria-label="${t("sms")}">${svgI("sms",22)}<span>${t("sms")}</span></a>
+  <a class="act" href="mailto:${esc(l.email||"")}" aria-disabled="${!l.email}" aria-label="${t("email")}">${svgI("mail",22)}<span>${t("email")}</span></a>
+  <a class="act" href="https://www.google.com/maps/dir/?api=1&destination=${l.lat},${l.lng}" target="_blank" rel="noopener" aria-label="${t("nav")}">${svgI("nav",22)}<span>${t("nav")}</span></a></div>`}
+function dateChips(l){
+  const m=l.meeting?fdt(l.meeting):t("bookMeeting");const r=l.revisit&&!isClosed(l.status)?t("revisit")+" "+fdate(l.revisit):t("setRevisit");
+  return `<div class="chips dchips">
+    <label class="chip ic ${l.meeting?"on":""}">${svgI("cal",18)}<span>${esc(m)}</span><input type="datetime-local" class="overpick" data-pick="meeting" value="${l.meeting?toLocalInput(l.meeting):""}" aria-label="${t("meeting")}"></label>
+    <label class="chip ic ${l.revisit&&!isClosed(l.status)?"on":""}">${svgI("refresh",18)}<span>${esc(r)}</span><input type="date" class="overpick" data-pick="revisit" value="${l.revisit||""}" aria-label="${t("revisit")}"></label></div>`}
+function bindDateChips(root,l){root.querySelectorAll("[data-pick]").forEach(inp=>inp.addEventListener("change",()=>{const k=inp.dataset.pick;const v=inp.value;
+  updLead(l,{[k]:k==="meeting"?(v?new Date(v).getTime():null):(v||null)});statStrip();toast(t("saved"));rerenderLead(l.id)}))}
+
+/* ----- quick card (peek) ----- */
+let openId=null,openMode=null,detailTab="info";
+function rerenderLead(id){if(openId!==id)return;if(openMode==="peek")openLead(id);else if(openMode==="detail")openDetail(id,detailTab,true)}
 function openLead(id){
   if(pend&&pend.l.id!==id)flushSave();
-  const l=S.leads.find(x=>x.id===id);if(!l)return;
-  const prev=selId;selId=id;
+  const l=curLead(id);if(!l)return;
+  const prev=selId;selId=id;openId=id;openMode="peek";
   if(map){if(prev&&prev!==id)refreshPin(prev);refreshPin(id)}
-  const notes=(l.notes||[]).slice();if(l.note)notes.unshift({t:l.created||0,rep:l.owner,text:l.note,legacy:1});
-  const calRow=(kind)=>`<div class="chips"><a class="chip" href="${gcalUrl(l,kind)}" target="_blank" rel="noopener">${t("gcal")}</a><a class="chip" href="${icsHref(l,kind)}" download="${kind==="mote"?"mote":"aterbesok"}.ics">${t("ical")}</a></div>`;
-  const area=areaOf(l.lat,l.lng);const s=ST[l.status]||ST.ny;const nm=nameOf(l);
-  const revChip=w=>{const d=dstr(new Date(Date.now()+w*7*DAY));return `<button class="chip" data-rev="${d}" aria-pressed="${l.revisit===d}">${t("w"+w)}</button>`};
-  const canDel=isChef()||l.owner===S.uid;
+  const s=st(l.status);const nm=nameOf(l);const notes=allNotes(l);
   openSheet(`
-    <div class="shead"><h2>${esc(addr(l))}</h2><button class="x" id="sx" aria-label="${t("cancel")}">${icon.x}</button></div>
-    <div class="leadmeta"><span class="pill" style="--c:${l.status==="ny"?"var(--muted)":s.c}">${t("st_"+l.status)}</span>${nm?`<b>${esc(nm)}</b>`:""}</div>
-    <div class="sub">${area?esc(area.name):t("noArea")}, ${esc(rep(l.owner).name)}, ${t("lastVisit")} ${rel(lastVisit(l))}</div>
-    <div class="stbar">${STATUS.map(x=>`<button class="stb" data-st="${x.k}" aria-pressed="${l.status===x.k}"><i style="--c:${x.c}">${x.ic}</i>${t("st_"+x.k)}</button>`).join("")}<button class="stb" id="toMap"><i style="--c:var(--soft);color:var(--accent)">${icon.nav}</i>${t("showMap")}</button></div>
-    ${l.revisit&&!["kund","nej","aldrig"].includes(l.status)?`<div class="reminder" style="margin-top:14px">${icon.rev}<span>${t("remindOn")}: ${fdate(l.revisit)}</span></div>`:""}
-    ${l.meeting?`<div class="reminder" style="margin-top:10px;--st-igen:var(--st-mote)">◷ <span>${t("meeting")}: ${fdt(l.meeting)}</span></div>`:""}
-    <div class="actions">
-      <a class="act" href="${telHref(l.phone)}" aria-disabled="${!l.phone}">${icon.call}${t("call")}</a>
-      <a class="act" href="${smsHref(l.phone,"")}" aria-disabled="${!l.phone}">${icon.sms}${t("sms")}</a>
-      <a class="act" href="https://www.google.com/maps/dir/?api=1&destination=${l.lat},${l.lng}" target="_blank" rel="noopener">${icon.nav}${t("nav")}</a>
-      <a class="act" href="${smsHref(l.phone,fillTmpl(l))}" aria-disabled="${!l.phone||(!l.revisit&&!l.meeting)}">${icon.rev}${t("revisitSms")}</a>
-    </div>
-    <div class="sec"><h3>${t("contact")}</h3>
-      <div class="grid2"><div class="field"><label for="f_first">${t("first")}</label><input type="text" id="f_first" value="${esc(l.first)}" autocomplete="off"></div>
-      <div class="field"><label for="f_last">${t("last")}</label><input type="text" id="f_last" value="${esc(l.last)}" autocomplete="off"></div></div>
-      <div class="grid2"><div class="field"><label for="f_phone">${t("phone")}</label><input type="tel" id="f_phone" value="${esc(l.phone)}" autocomplete="off"></div>
-      <div class="field"><label for="f_email">${t("email")}</label><input type="email" id="f_email" value="${esc(l.email)}" autocomplete="off"></div></div>
-      <div class="grid2" style="grid-template-columns:2fr 1fr"><div class="field"><label for="f_street">${t("street")}</label><input type="text" id="f_street" value="${esc(l.street)}" autocomplete="off"></div>
-      <div class="field"><label for="f_num">${t("number")}</label><input type="text" id="f_num" value="${esc(l.num)}" autocomplete="off"></div></div>
-    </div>
-    <div class="sec"><h3>${t("revisit")}</h3>
-      <div class="chips">${[1,2,4,8].map(revChip).join("")}<button class="chip" id="revClear">${t("clear")}</button></div>
-      <input type="date" id="f_rev" value="${l.revisit||""}" aria-label="${t("revisit")}">
-      ${l.revisit?calRow("igen"):""}
-    </div>
-    <div class="sec"><h3>${t("meeting")}</h3><input type="datetime-local" id="f_meet" value="${l.meeting?toLocalInput(l.meeting):""}" aria-label="${t("meeting")}">${l.meeting?calRow("mote"):""}</div>
+    <div class="peekhead">${stDot(l.status,46)}
+      <div class="ph-t"><b>${esc(nm||addr(l))}</b><span>${l.status==="ny"?t("st_ny"):esc(s.label)}${lastVisit(l)?`, ${rel(lastVisit(l))}`:""}</span></div>
+      <button class="btn sm ghost" id="toDetail">${t("details")}</button></div>
+    ${nm?`<div class="peekaddr">${esc(fullAddr(l))}</div>`:([l.zip,l.city].filter(Boolean).length?`<div class="peekaddr sub">${esc([l.zip,l.city].filter(Boolean).join(" "))}</div>`:"")}
+    ${statusRow(l)}
+    ${dateChips(l)}
     <div class="sec"><h3>${t("notes")}</h3>
-      <div class="noteadd"><textarea id="f_newnote" rows="2" placeholder="${t("notePh")}">${esc(noteDraft[l.id]||"")}</textarea><button class="btn sm" id="addNote">${t("addNote")}</button></div>
-      ${notes.length?`<div class="notes">${notes.slice().reverse().map(n=>`<div class="note1"><p>${esc(n.text)}</p><small>${esc(rep(n.rep).name)}${n.legacy?"":" · "+fdt(n.t)}</small></div>`).join("")}</div>`:`<div class="sub">${t("noNotes")}</div>`}
+      ${notes.length?notes.slice(-2).reverse().map(n=>`<div class="bubble"><p>${esc(n.text)}</p><small>${n.legacy?esc(rep(n.rep).name):fdt(n.t)+", "+esc(rep(n.rep).name)}</small></div>`).join(""):""}
+      <form class="composer" id="qnForm"><input type="text" id="qn" placeholder="${t("addNotePh")}" value="${esc(noteDraft[l.id]||"")}" autocomplete="off" enterkeyhint="send"><button class="sendbtn" aria-label="${t("addNote")}">${svgI("plus",20,2.6)}</button></form>
     </div>
-    ${l.hist.length?`<div class="sec"><h3>${t("history")}</h3><div class="timeline">${l.hist.slice().reverse().map(h=>`<div class="tl"><i style="--c:${(ST[h.s]||ST.ny).c}"></i><span>${t("st_"+h.s)} · ${esc(rep(h.rep).name)}</span><small>${fdt(h.t)}</small></div>`).join("")}</div></div>`:""}
-    ${canDel?`<div class="sec" id="delWrap"><button class="btn danger" id="delBtn">${t("del")}</button></div>`:""}`,"lead:"+l.id);
-  $("sx").onclick=closeSheet;
-  $("sheet").querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{
-    flushSave();try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}
-    const k=b.dataset.st;const h={t:Date.now(),rep:S.uid,s:k};
-    const before={status:l.status,revisit:l.revisit||null,owner:l.owner||null};
-    const patch={status:k};
-    if(k==="igen"&&!l.revisit)patch.revisit=dstr(new Date(Date.now()+14*DAY));
-    if(k==="kund"||k==="nej"||k==="aldrig")patch.revisit=null;
-    if(!l.owner)patch.owner=S.uid;
-    l.hist.push(h);Object.assign(l,patch);patch.updated=Date.now();patch.hist=FV.arrayUnion(h);
-    db.collection("leads").doc(l.id).set(patch,{merge:true}).catch(err);
-    refreshPin(l.id);statStrip();
-    toast(t("statusSet")+t("st_"+k),t("undo"),()=>{l.hist=l.hist.filter(x=>x!==h);Object.assign(l,before);
-      db.collection("leads").doc(l.id).set(Object.assign({},before,{hist:FV.arrayRemove(h),updated:Date.now()}),{merge:true}).catch(err);refreshPin(l.id);statStrip();toast(t("undone"))});
-    if(k==="borta"||k==="nej"||k==="aldrig")closeSheet();else openLead(l.id);
+    ${actionRow(l)}
+    <div class="assigned">${t("assignedTo")}: <b>${esc(rep(l.owner).name)}</b></div>`,"peek:"+l.id);
+  const sh=$("sheet");
+  bindStatusRow(sh,l);bindDateChips(sh,l);
+  $("toDetail").onclick=()=>openDetail(l.id,"info");
+  const qn=$("qn");qn.addEventListener("input",()=>{noteDraft[l.id]=qn.value});
+  $("qnForm").onsubmit=e=>{e.preventDefault();const v=qn.value.trim();if(!v)return qn.focus();addNoteTo(l,v);openLead(l.id)};
+}
+
+/* ----- details page ----- */
+function closeDetail(){const d=$("detail");flushSave();d.classList.remove("open");setTimeout(()=>{if(!d.classList.contains("open"))d.hidden=true},260);
+  if(openMode==="detail"){openMode=null;openId=null;if(selId){const x=selId;selId=null;refreshPin(x)}}if(tab!=="map"&&tab!=="more")renderTab()}
+function openDetail(id,tabName,keepScroll){
+  const l=curLead(id);if(!l)return;
+  if(openMode==="peek"){const sh=$("sheet"),sc=$("scrim");sh.classList.remove("open");sc.classList.remove("open");sheetKey=null;setTimeout(()=>{sh.hidden=true;sc.hidden=true},230)}
+  openId=id;openMode="detail";detailTab=tabName||"info";selId=id;
+  const d=$("detail");const body=d.querySelector(".dbody");const y=keepScroll&&body?body.scrollTop:0;
+  const s=st(l.status);const nm=nameOf(l);
+  const tabs=[["info",t("info")],["notes",t("notes")],["act",t("activity")]];
+  d.innerHTML=`<header class="dhead">
+      <button class="iconbtn flat" id="dBack" aria-label="${t("back")}">${svgI("back",24,2.4)}</button>
+      <div class="dtitle"><b>${esc(nm||addr(l))}</b><span>${l.status==="ny"?"":stDot(l.status,22)} ${l.status==="ny"?t("st_ny"):esc(s.label)}</span></div>
+      <span style="width:46px"></span></header>
+    <nav class="dtabs" role="tablist">${tabs.map(([k,lbl])=>`<button role="tab" data-dt="${k}" aria-selected="${detailTab===k}">${lbl}</button>`).join("")}</nav>
+    <div class="dbody">${detailTab==="info"?infoTab(l):detailTab==="notes"?notesTab(l):actTab(l)}</div>
+    ${detailTab==="notes"?`<form class="composer docked" id="dnForm"><textarea id="dn" rows="1" placeholder="${t("addNotePh")}">${esc(noteDraft[l.id]||"")}</textarea><button class="sendbtn" aria-label="${t("addNote")}">${svgI("plus",20,2.6)}</button></form>`:""}`;
+  if(d.hidden){d.hidden=false;void d.offsetHeight}d.classList.add("open");
+  d.querySelector(".dbody").scrollTop=y;
+  $("dBack").onclick=closeDetail;
+  d.querySelectorAll("[data-dt]").forEach(b=>b.onclick=()=>{flushSave();openDetail(id,b.dataset.dt)});
+  if(detailTab==="info")bindInfo(d,l);
+  if(detailTab==="notes"){const dn=$("dn");dn.addEventListener("input",()=>{noteDraft[l.id]=dn.value;dn.style.height="auto";dn.style.height=Math.min(dn.scrollHeight,140)+"px"});
+    $("dnForm").onsubmit=e=>{e.preventDefault();const v=dn.value.trim();if(!v)return dn.focus();addNoteTo(l,v);openDetail(id,"notes")};
+    const b=d.querySelector(".dbody");b.scrollTop=b.scrollHeight}
+}
+function fld(id,label,val,type,wide){return `<div class="field ${wide?"wide":""}"><label for="${id}">${label}</label><input type="${type||"text"}" id="${id}" value="${esc(val||"")}" autocomplete="off"></div>`}
+function infoTab(l){
+  const chef=isChef();const area=areaOf(l.lat,l.lng);
+  return `${actionRow(l)}
+    <section class="dsec"><h3>${t("contact")}</h3>
+      <div class="fgrid">${fld("f_company",t("company"),l.company,"text",1)}${fld("f_first",t("first"),l.first)}${fld("f_last",t("last"),l.last)}
+      ${fld("f_phone",t("phone"),l.phone,"tel",1)}${fld("f_email",t("email"),l.email,"email",1)}</div></section>
+    <section class="dsec"><h3>${t("address")}</h3>
+      <div class="fgrid">${fld("f_street",t("street"),l.street,"text",1)}${fld("f_num",t("number"),l.num)}${fld("f_apt",t("apt"),l.apt)}${fld("f_zip",t("zip"),l.zip)}${fld("f_city",t("city"),l.city)}</div>
+      <div class="sub">${area?esc(area.name):t("noArea")}</div></section>
+    <section class="dsec"><h3>${t("assignedTo")}</h3>
+      ${chef?`<select id="f_owner">${team().map(u=>`<option value="${u.id}" ${l.owner===u.id?"selected":""}>${esc(u.name)}</option>`).join("")}</select>`:`<p class="plain">${esc(rep(l.owner).name)}</p>`}</section>
+    <section class="dsec"><h3>${t("statusH")}</h3>${statusRow(l)}</section>
+    <section class="dsec"><h3>${t("meeting")}</h3>
+      <input type="datetime-local" id="f_meet" value="${l.meeting?toLocalInput(l.meeting):""}" aria-label="${t("meeting")}">
+      ${l.meeting?`<div class="chips"><a class="chip" href="${gcalUrl(l,"mote")}" target="_blank" rel="noopener">${t("gcal")}</a><a class="chip" href="${icsHref(l,"mote")}" download="mote.ics">${t("ical")}</a></div>`:""}</section>
+    <section class="dsec"><h3>${t("revisit")}</h3>
+      <div class="chips">${[1,2,4,8].map(w=>{const d=dstr(new Date(Date.now()+w*7*DAY));return `<button class="chip" data-rev="${d}" aria-pressed="${l.revisit===d}">${t("w"+w)}</button>`}).join("")}<button class="chip" id="revClear">${t("clear")}</button></div>
+      <input type="date" id="f_rev" value="${l.revisit||""}" aria-label="${t("revisit")}">
+      ${l.revisit?`<div class="chips"><a class="chip" href="${gcalUrl(l,"igen")}" target="_blank" rel="noopener">${t("gcal")}</a><a class="chip" href="${icsHref(l,"igen")}" download="aterbesok.ics">${t("ical")}</a></div>`:""}</section>
+    ${(isChef()||l.owner===S.uid)?`<section class="dsec" id="delWrap"><button class="btn danger" id="delBtn">${svgI("trash",18)} ${t("del")}</button></section>`:""}`;
+}
+function bindInfo(root,l){
+  const bt=(id,key)=>{const e=$(id);if(!e)return;e.addEventListener("input",()=>queueSave(l,key,e.value));e.addEventListener("blur",flushSave)};
+  [["f_company","company"],["f_first","first"],["f_last","last"],["f_phone","phone"],["f_email","email"],["f_street","street"],["f_num","num"],["f_apt","apt"],["f_zip","zip"],["f_city","city"]].forEach(x=>bt(...x));
+  bindStatusRow(root,l);
+  const ow=$("f_owner");if(ow)ow.onchange=()=>{const to=ow.value;const h=Object.assign({t:Date.now(),rep:S.uid,type:"assign",to},posNow());l.hist.push(h);l.owner=to;
+    db.collection("leads").doc(l.id).set({owner:to,hist:FV.arrayUnion(h),updated:Date.now()},{merge:true}).catch(err);refreshPin(l.id);toast(t("saved"))};
+  const dt=(id,key,tr)=>{const e=$(id);e.addEventListener("change",()=>{flushSave();updLead(l,{[key]:tr(e.value)});statStrip();toast(t("saved"));openDetail(l.id,"info",true)})};
+  dt("f_rev","revisit",v=>v||null);dt("f_meet","meeting",v=>v?new Date(v).getTime():null);
+  root.querySelectorAll("[data-rev]").forEach(b=>b.onclick=()=>{updLead(l,{revisit:b.dataset.rev});statStrip();openDetail(l.id,"info",true);toast(t("remindOn")+": "+fdate(l.revisit))});
+  $("revClear").onclick=()=>{updLead(l,{revisit:null});statStrip();openDetail(l.id,"info",true)};
+  const del=$("delBtn");if(del)del.onclick=()=>{$("delWrap").innerHTML=`<p class="plain"><b>${t("delQ")}</b></p><div class="confirm"><button class="btn ghost" id="delNo">${t("cancel")}</button><button class="btn danger" id="delYes">${t("yesDel")}</button></div>`;
+    $("delNo").onclick=()=>openDetail(l.id,"info",true);$("delYes").onclick=()=>{S.leads=S.leads.filter(x=>x.id!==l.id);db.collection("leads").doc(l.id).delete().catch(err);selId=null;closeDetail();drawPins();statStrip()}};
+}
+function notesTab(l){
+  const n=allNotes(l);
+  if(!n.length)return `<div class="empty">${t("noNotes")}</div>`;
+  return `<div class="chat">${n.map(x=>`<div class="msg"><span class="av sm">${esc(initials(rep(x.rep).name))}</span><div><div class="mhead"><b>${esc(rep(x.rep).name)}</b>${x.legacy?"":`<small>${fdt(x.t)}</small>`}</div><div class="bubble"><p>${esc(x.text)}</p></div></div></div>`).join("")}</div>`;
+}
+function distBadge(e,l){
+  if(e.lat==null)return `<span class="dist none">${t("noLocation")} ${svgI("locoff",18)}</span>`;
+  const m=legM([e.lat,e.lng],[l.lat,l.lng]);const ok=m<=75;
+  return `<span class="dist ${ok?"ok":"far"}">${fdist(m)} ${svgI(ok?"check":"alert",18,2.6)}</span>`;
+}
+function actTab(l){
+  const ev=[];
+  l.hist.forEach(h=>{
+    if(h.type==="assign")ev.push({t:h.t,ic:`<span class="av sm">${esc(initials(rep(h.to).name))}</span>`,title:t("evAssign"),by:h.rep,detail:t("evAssignTo")+" "+rep(h.to).name,e:h});
+    else if(h.type==="create")ev.push({t:h.t,ic:`<span class="sdot new" style="width:36px;height:36px"></span>`,title:t("evCreate"),by:h.rep,e:h});
+    else ev.push({t:h.t,ic:stDot(h.s,36),title:t("evStatus")+" "+stLabel(h.s),by:h.rep,e:h});
   });
-  $("toMap").onclick=()=>{closeSheet();showTab("map");map.flyTo([l.lat,l.lng],18);setTimeout(()=>openLead(l.id),450)};
-  const bindText=(id,key)=>{const e=$(id);e.addEventListener("input",()=>queueSave(l,key,e.value));e.addEventListener("blur",flushSave)};
-  bindText("f_first","first");bindText("f_last","last");bindText("f_phone","phone");bindText("f_email","email");bindText("f_street","street");bindText("f_num","num");
-  const bindDate=(id,key,tr)=>{const e=$(id);e.addEventListener("change",()=>{flushSave();updLead(l,{[key]:tr(e.value)});statStrip();toast(t("saved"));openLead(l.id)})};
-  bindDate("f_rev","revisit",v=>v||null);bindDate("f_meet","meeting",v=>v?new Date(v).getTime():null);
-  const nn=$("f_newnote");nn.addEventListener("input",()=>{noteDraft[l.id]=nn.value});
-  $("addNote").onclick=()=>{const txt=nn.value.trim();if(!txt)return nn.focus();flushSave();const n={t:Date.now(),rep:S.uid,text:txt};
-    l.notes=(l.notes||[]).concat(n);delete noteDraft[l.id];
-    db.collection("leads").doc(l.id).set({notes:FV.arrayUnion(n),updated:Date.now()},{merge:true}).catch(err);toast(t("noteAdded"));openLead(l.id)};
-  $("sheet").querySelectorAll("[data-rev]").forEach(b=>b.onclick=()=>{updLead(l,{revisit:b.dataset.rev});statStrip();openLead(l.id);toast(t("remindOn")+": "+fdate(l.revisit))});
-  $("revClear").onclick=()=>{updLead(l,{revisit:null});statStrip();openLead(l.id)};
-  if($("delBtn"))$("delBtn").onclick=()=>{$("delWrap").innerHTML=`<div class="sub" style="font-weight:700;color:var(--ink)">${t("delQ")}</div><div class="confirm"><button class="btn ghost" id="delNo">${t("cancel")}</button><button class="btn danger" id="delYes">${t("yesDel")}</button></div>`;
-    $("delNo").onclick=()=>openLead(l.id);$("delYes").onclick=()=>{S.leads=S.leads.filter(x=>x.id!==l.id);selId=null;db.collection("leads").doc(l.id).delete().catch(err);closeSheet();drawPins();statStrip()}};
+  (l.notes||[]).forEach(n=>ev.push({t:n.t,ic:`<span class="sdot" style="--c:var(--soft);color:var(--ink);width:36px;height:36px">${svgI("note",18)}</span>`,title:t("evNote"),by:n.rep,detail:n.text,e:n}));
+  if(!l.hist.some(h=>h.type==="create")&&l.created)ev.push({t:l.created,ic:`<span class="sdot new" style="width:36px;height:36px"></span>`,title:t("evCreate"),by:l.owner,e:{}});
+  ev.sort((a,b)=>b.t-a.t);
+  if(!ev.length)return `<div class="empty">${t("noActivity")}</div>`;
+  let out="",day="";
+  ev.forEach(x=>{const d=new Date(x.t).toLocaleDateString(loc(),{weekday:"short",day:"numeric",month:"short",year:new Date(x.t).getFullYear()!==new Date().getFullYear()?"numeric":undefined});
+    if(d!==day){out+=`<div class="dayhead">${d}</div>`;day=d}
+    out+=`<div class="ev">${x.ic}<div class="evt"><b>${esc(x.title)}</b><small>${t("by")} ${esc(rep(x.by).name)} ${t("at")} ${ftime(x.t)}</small>${x.detail?`<p>${esc(x.detail)}</p>`:""}</div>${distBadge(x.e,l)}</div>`});
+  return `<div class="activity">${out}</div>`;
 }
 
 /* ================= new lead ================= */
@@ -454,7 +609,7 @@ async function reverseGeo(lat,lng){
 }
 function newLeadAt(lat,lng,pre){
   const ref=db.collection("leads").doc();
-  const l={id:ref.id,lat,lng,street:pre?pre.street:"",num:pre?pre.num:"",first:"",last:"",phone:"",email:"",note:"",status:"ny",revisit:null,meeting:null,owner:S.uid,created:Date.now(),updated:Date.now(),hist:[]};
+  const l={id:ref.id,lat,lng,street:pre?pre.street:"",num:pre?pre.num:"",first:"",last:"",phone:"",email:"",note:"",status:"ny",revisit:null,meeting:null,owner:S.uid,created:Date.now(),updated:Date.now(),hist:[Object.assign({t:Date.now(),rep:S.uid,type:"create"},posNow())]};
   S.leads.push(l);
   const {id,...doc}=l;ref.set(doc).catch(err);
   drawPins();drawAddresses();openLead(l.id);
@@ -472,6 +627,9 @@ $("placeCancel").onclick=endPlacing;
 $("placeOk").onclick=()=>{const c=map.getCenter();endPlacing();newLeadAt(c.lat,c.lng)};
 $("locBtn").onclick=()=>locate(true);
 $("baseBtn").onclick=()=>setBase(curBase==="sat"?"map":"sat");
+$("searchBtn").onclick=()=>{$("searchRow").hidden=false;$("statstrip").hidden=true;setTimeout(()=>$("q").focus(),30)};
+$("searchClose").onclick=()=>{$("q").value="";$("searchRow").hidden=true;$("results").hidden=true;$("statstrip").hidden=false};
+$("routeBtn").onclick=()=>{const ts=todayStr();const list=S.leads.filter(l=>l.owner===S.uid&&((l.revisit&&l.revisit<=ts&&!isClosed(l.status))||(l.meeting&&dstr(new Date(l.meeting))===ts)));planRoute(list)};
 
 /* ================= draw area (chef) ================= */
 let drawLayer=null;
@@ -505,18 +663,18 @@ $("drawDone").onclick=()=>{
 /* ================= search ================= */
 $("q").addEventListener("input",()=>{
   const q=$("q").value.trim().toLowerCase();
-  if(!q){$("results").hidden=true;$("statstrip").hidden=false;return}
+  if(!q){$("results").hidden=true;return}
   const hits=S.leads.filter(l=>(addr(l)+" "+nameOf(l)+" "+(l.phone||"")).toLowerCase().includes(q)).slice(0,12);
   $("statstrip").hidden=true;$("results").hidden=false;
-  $("resultsBox").innerHTML=hits.length?hits.map(l=>{const s=ST[l.status]||ST.ny;return `<button data-id="${l.id}"><span class="pin${l.status==="ny"?" new":""}" style="--c:${s.c};width:20px;height:20px;flex:none"><span style="font-size:10px">${s.ic}</span></span><span style="min-width:0"><b>${esc(addr(l))}</b><br><small style="color:var(--muted)">${esc(nameOf(l)||t("st_"+l.status))}</small></span></button>`}).join(""):`<div class="empty">—</div>`;
-  $("resultsBox").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const l=S.leads.find(x=>x.id===b.dataset.id);$("q").value="";$("results").hidden=true;$("statstrip").hidden=false;$("q").blur();map.flyTo([l.lat,l.lng],18);openLead(l.id)});
+  $("resultsBox").innerHTML=hits.length?hits.map(l=>{return `<button data-id="${l.id}">${stDot(l.status,28)}<span style="min-width:0"><b>${esc(addr(l))}</b><br><small style="color:var(--muted)">${esc(nameOf(l)||stLabel(l.status))}</small></span></button>`}).join(""):`<div class="empty">—</div>`;
+  $("resultsBox").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const l=S.leads.find(x=>x.id===b.dataset.id);$("q").value="";$("results").hidden=true;$("searchRow").hidden=true;$("statstrip").hidden=false;$("q").blur();map.flyTo([l.lat,l.lng],18);openLead(l.id)});
 });
 
 /* ================= filter ================= */
 $("filterBtn").onclick=()=>{
   const render=()=>{openSheet(`
     <div class="shead"><h2>${t("filterTitle")}</h2><button class="x" id="sx">${icon.x}</button></div>
-    <div class="legend" style="margin-top:14px">${["ny",...STATUS.map(s=>s.k)].map(k=>{const s=ST[k];const on=!P.filter.hide.includes(k);return `<button class="chip" data-f="${k}" aria-pressed="${on}" style="display:flex;gap:8px;align-items:center;justify-content:flex-start"><span class="pin${k==="ny"?" new":""}" style="--c:${s.c};width:18px;height:18px;flex:none"><span style="font-size:9px">${s.ic}</span></span>${t("st_"+k)}</button>`}).join("")}</div>
+    <div class="legend" style="margin-top:14px">${["ny",...stList().map(s=>s.k)].map(k=>{const on=!P.filter.hide.includes(k);return `<button class="chip fchip" data-f="${k}" aria-pressed="${on}">${stDot(k,24)}${esc(stLabel(k))}</button>`}).join("")}</div>
     <div class="sec"><div class="chips"><button class="chip" id="fMine" aria-pressed="${P.filter.mine}">${t("onlyMine")}</button><button class="chip" id="fAreas" aria-pressed="${P.filter.areas}">${t("showAreas")}</button></div></div>
     <div class="sec"><button class="btn" id="fDone">${t("done")}</button></div>`);
     $("sx").onclick=closeSheet;$("fDone").onclick=closeSheet;
@@ -530,7 +688,7 @@ $("filterBtn").onclick=()=>{
 let lf="all",lsort="near",lq="";
 function leadsView(){
   const ts=todayStr();
-  const F={all:l=>l.status!=="ny"||nameOf(l),mine:l=>l.owner===S.uid,due:l=>l.revisit&&l.revisit<=ts&&!["kund","aldrig","nej"].includes(l.status),int:l=>l.status==="int",mote:l=>l.status==="mote",kund:l=>l.status==="kund"};
+  const F={all:l=>l.status!=="ny"||nameOf(l),mine:l=>l.owner===S.uid,due:l=>l.revisit&&l.revisit<=ts&&!isClosed(l.status),int:l=>isLead(l.status),mote:l=>!!l.meeting,kund:l=>isSale(l.status)};
   let rows=S.leads.filter(F[lf]);
   if(lq){const q=lq.toLowerCase();rows=S.leads.filter(l=>(addr(l)+" "+nameOf(l)+" "+(l.phone||"")).toLowerCase().includes(q))}
   rows.sort(lsort==="near"?(a,b)=>dist(a)-dist(b):(a,b)=>(b.updated||lastVisit(b))-(a.updated||lastVisit(a)));
@@ -546,10 +704,10 @@ function leadsView(){
   const qi=$("lq");qi.oninput=()=>{lq=qi.value;const pos=qi.selectionStart;leadsView();const n=$("lq");n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}};
 }
 function liRow(l,extra){
-  const s=ST[l.status]||ST.ny;const nm=nameOf(l);
-  const right=extra||(l.revisit&&!["kund","nej","aldrig"].includes(l.status)?`↻ ${fdate(l.revisit)}`:fdist(dist(l)));
-  return `<button class="li" data-id="${l.id}"><span class="dot${l.status==="ny"?" new":""}" style="--c:${s.c}">${s.ic||"·"}</span>
-    <span class="t"><b>${esc(nm||addr(l))}</b><small>${nm?esc(addr(l))+", ":""}${esc(rep(l.owner).name)}, ${rel(lastVisit(l))}</small><span class="pill" style="--c:${l.status==="ny"?"var(--muted)":s.c};margin-top:4px">${t("st_"+l.status)}</span></span>
+  const nm=nameOf(l);
+  const right=extra||(l.revisit&&!isClosed(l.status)?`↻ ${fdate(l.revisit)}`:fdist(dist(l)));
+  return `<button class="li" data-id="${l.id}">${stDot(l.status,36)}
+    <span class="t"><b>${esc(nm||addr(l))}</b><small>${nm?esc(addr(l))+", ":""}${esc(rep(l.owner).name)}, ${rel(lastVisit(l))}</small><span class="pill" style="--c:${l.status==="ny"?"var(--muted)":st(l.status).color};margin-top:4px">${esc(stLabel(l.status))}</span></span>
     <span class="r">${right}</span></button>`;
 }
 function bindRows(root){root.querySelectorAll(".li[data-id]").forEach(b=>b.onclick=()=>openLead(b.dataset.id))}
@@ -562,14 +720,14 @@ function calItems(ds){
   S.leads.forEach(l=>{
     if(!mineOrChef(l))return;
     if(l.meeting&&dstr(new Date(l.meeting))===ds)ev.push({l,kind:"mote",sort:l.meeting});
-    if(l.revisit===ds&&!["kund","nej","aldrig"].includes(l.status))ev.push({l,kind:"igen",sort:new Date(ds+"T23:00").getTime()});
+    if(l.revisit===ds&&!isClosed(l.status))ev.push({l,kind:"igen",sort:new Date(ds+"T23:00").getTime()});
   });
   return ev.sort((a,b)=>a.sort-b.sort);
 }
 function calView(){
   const ts=todayStr();if(!calDay)calDay=ts;
   const days=[];for(let i=0;i<14;i++)days.push(dstr(new Date(Date.now()+i*DAY)));
-  const overdue=S.leads.filter(l=>mineOrChef(l)&&l.revisit&&l.revisit<ts&&!["kund","nej","aldrig"].includes(l.status));
+  const overdue=S.leads.filter(l=>mineOrChef(l)&&l.revisit&&l.revisit<ts&&!isClosed(l.status));
   const items=calItems(calDay);const withPhone=items.filter(e=>e.l.phone);
   $("calPane").innerHTML=`
     <div class="phead"><h1>${t("calTitle")}</h1></div>
@@ -586,7 +744,7 @@ function bulkSms(list){
   const render=()=>{openSheet(`
     <div class="shead"><h2>${t("sendAll")}</h2><button class="x" id="sx">${icon.x}</button></div>
     <div class="sub">${t("sendAllSub")}</div>
-    <div class="list" style="margin-top:14px">${list.map(l=>{const s=ST[l.status]||ST.ny;return `<div class="li" style="cursor:default"><span class="dot" style="--c:${s.c}">${s.ic}</span>
+    <div class="list" style="margin-top:14px">${list.map(l=>{return `<div class="li" style="cursor:default">${stDot(l.status,36)}
       <span class="t"><b>${esc(nameOf(l)||addr(l))}</b><small>${esc(l.phone)} · ${esc(addr(l))}</small></span>
       <span class="r">${l.smsSent===todayStr()?`<span class="pill" style="--c:var(--st-kund)">✓ ${t("sent")}</span>`:`<a class="btn sm" data-sms="${l.id}" href="${smsHref(l.phone,fillTmpl(l))}">${t("send")}</a>`}</span></div>`}).join("")}</div>
     <div class="sec"><h3>${t("tmpl")}</h3><textarea id="prev" rows="4" readonly>${esc(list[0]?fillTmpl(list[0]):"")}</textarea><button class="btn ghost" id="cp">${t("copy")}</button></div>`);
@@ -603,7 +761,7 @@ function compView(){
   if(cp==="month")st.setDate(1);
   const s0=st.getTime();
   const score={};team().forEach(u=>score[u.id]={k:0,ld:0,sa:0});
-  S.leads.forEach(l=>l.hist.forEach(h=>{if(h.t>=s0&&score[h.rep]){score[h.rep].k++;if(h.s==="int"||h.s==="mote")score[h.rep].ld++;if(h.s==="kund")score[h.rep].sa++}}));
+  S.leads.forEach(l=>l.hist.forEach(h=>{if(h.s&&h.t>=s0&&score[h.rep]){score[h.rep].k++;if(isLead(h.s))score[h.rep].ld++;if(isSale(h.s))score[h.rep].sa++}}));
   const rows=team().map(u=>({u,v:score[u.id][cm],all:score[u.id]})).sort((a,b)=>b.v-a.v);
   const max=Math.max(1,...rows.map(x=>x.v));
   const pod=(x,place)=>x?`<div class="pod ${place===1?"first":""}"><span class="medal">${place===1?"🥇":place===2?"🥈":"🥉"}</span><span class="av">${esc(x.u.name[0])}</span><span style="font-weight:800">${esc(x.u.name)}${x.u.id===S.uid?` <small>(${t("you")})</small>`:""}</span><b>${x.v}</b></div>`:"<div></div>";
@@ -639,8 +797,9 @@ function moreView(){
     ${chef?`<h3>${t("impTitle")}</h3><div class="card"><div class="sub" style="margin:0">${t("impHelp")}</div><label class="btn ghost" for="impFile" style="cursor:pointer">${t("impPick")}</label><input type="file" id="impFile" accept=".csv,text/csv" hidden></div>`:""}
     <h3>${t("tmpl")}</h3>
     <div class="card"><textarea id="tmpl" rows="4" ${chef?"":"readonly"}>${esc(S.tmpl||t("tmplDefault"))}</textarea><div class="sub" style="margin:0">${chef?t("tmplHelp"):t("tmplChefOnly")}</div></div>
-    <h3>${t("statuses")}</h3>
-    <div class="card"><div class="legend">${["ny",...STATUS.map(s=>s.k)].map(k=>{const s=ST[k];return `<span><i style="--c:${k==="ny"?"var(--soft)":s.c};${k==="ny"?"color:var(--muted);border:2px solid var(--muted)":""}">${s.ic}</i>${t("st_"+k)}</span>`}).join("")}</div></div>
+    <h3>${t("stEditH")}</h3>
+    ${chef?`<div class="card" id="stEditor"><div class="sub" style="margin:0">${t("stEditHelp")}</div><div id="stRows"></div><button class="btn ghost" id="stAddB">${svgI("plus",18)} ${t("stAdd")}</button><button class="btn" id="stSaveB">${t("stSave")}</button></div>`
+      :`<div class="card"><div class="legend">${stList().map(x=>`<span>${stDot(x.k,24)}${esc(x.label)}</span>`).join("")}</div></div>`}
     <h3>${t("lang")}</h3>
     <div class="seg"><button id="lsv" aria-pressed="${P.lang==="sv"}">Svenska</button><button id="len" aria-pressed="${P.lang==="en"}">English</button></div>
     <div class="note">${t("longPress")}</div>`;
@@ -654,6 +813,7 @@ function moreView(){
       row.querySelector("[data-no]").onclick=moreView;row.querySelector("[data-yes]").onclick=()=>db.collection("areas").doc(b.dataset.delarea).delete().catch(err)});
     $("newArea").onclick=startDrawing;
     $("impFile").onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)readImport(f);e.target.value=""};
+    stEditor();
     $("tmpl").onchange=()=>{const v=$("tmpl").value.trim();db.collection("settings").doc("main").set({tmpl:v&&v!==t("tmplDefault")?v:null},{merge:true}).then(()=>toast(t("saved"))).catch(err)};
   }
   $("lsv").onclick=()=>{P.lang="sv";savePrefs();applyLang();moreView()};
@@ -661,6 +821,28 @@ function moreView(){
 }
 
 
+
+/* ================= status editor (chef) ================= */
+let stDraft=null;
+function stEditor(){
+  if(!$("stRows"))return;
+  if(!stDraft)stDraft=JSON.parse(JSON.stringify(stList()));
+  const flags=["sale","lead","revisit","closed","none"];
+  $("stRows").innerHTML=stDraft.map((x,i)=>`<div class="strow-ed">
+    <span class="sdot" style="--c:${x.color};width:40px;height:40px">${svgI(x.icon,20,2.6)}</span>
+    <div class="ed">
+      <input type="text" data-i="${i}" data-f="label" value="${esc(x.label)}" aria-label="${t("stName")}" placeholder="${t("stName")}">
+      <div class="edrow"><input type="color" data-i="${i}" data-f="color" value="${esc(x.color)}" aria-label="${t("stColor")}">
+      <select data-i="${i}" data-f="icon" aria-label="${t("stIcon")}">${ICON_NAMES.map(n=>`<option value="${n}" ${x.icon===n?"selected":""}>${n}</option>`).join("")}</select>
+      <select data-i="${i}" data-f="flag" aria-label="${t("stType")}">${flags.map(f=>`<option value="${f}" ${x.flag===f?"selected":""}>${t("fl_"+f)}</option>`).join("")}</select>
+      <button class="iconbtn flat sm" data-del="${i}" aria-label="${t("stDel")}">${svgI("trash",18)}</button></div></div></div>`).join("");
+  $("stRows").querySelectorAll("[data-f]").forEach(el=>el.addEventListener(el.tagName==="INPUT"&&el.type==="text"?"input":"change",()=>{stDraft[+el.dataset.i][el.dataset.f]=el.value;if(el.dataset.f!=="label")stEditor()}));
+  $("stRows").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{stDraft.splice(+b.dataset.del,1);stEditor()});
+  $("stAddB").onclick=()=>{stDraft.push({k:"s"+Date.now().toString(36),label:"",color:"#0b6e7f",icon:"check",flag:"none"});stEditor();const ins=$("stRows").querySelectorAll('input[type=text]');ins[ins.length-1].focus()};
+  $("stSaveB").onclick=()=>{if(stDraft.some(x=>!x.label.trim()))return toast(t("stNeedName"));
+    const clean=stDraft.map(x=>({k:x.k,label:x.label.trim(),color:x.color,icon:x.icon,flag:x.flag}));
+    db.collection("settings").doc("main").set({statuses:clean},{merge:true}).then(()=>{stDraft=null;toast(t("saved"))}).catch(err)};
+}
 /* ================= calendar export ================= */
 function calTimes(l,kind){
   if(kind==="mote"&&l.meeting){const s=new Date(l.meeting),e=new Date(l.meeting+30*6e4);return {s,e,allDay:false}}
@@ -742,11 +924,15 @@ function mapCols(head){
     for(const a of alts){const i=h.findIndex((x,j)=>!used.has(j)&&x.includes(a));if(i>=0){m[k]=i;used.add(i);return}}});
   return m;
 }
-function mapStatus(v){v=(v||"").toLowerCase();
-  if(/do not|dnk|knacka ej|no soliciting/.test(v))return"aldrig";if(/not home|inte hemma|no answer|nh\b/.test(v))return"borta";
-  if(/not interested|nej|no\b|ni\b/.test(v))return"nej";if(/appoint|möte|mote|booked/.test(v))return"mote";
-  if(/sold|customer|kund|sale|won/.test(v))return"kund";if(/come back|callback|call back|go back|återkom|aterkom|later|kom tillbaka|revisit/.test(v))return"igen";
-  if(/interest|lead|hot|warm|intresse/.test(v))return"int";return v?"borta":"ny"}
+function mapStatus(v){const raw=(v||"").trim();if(!raw)return"ny";
+  const exact=stList().find(x=>x.label.toLowerCase()===raw.toLowerCase());if(exact)return exact.k;
+  const lv=raw.toLowerCase();const byFlag=f=>(stList().find(x=>x.flag===f)||{}).k;
+  if(/do not|dnk|knacka ej|no soliciting/.test(lv))return byFlag("closed")||"aldrig";
+  if(/sold|customer|kund|sale|won|såld|abonnemang/.test(lv))return byFlag("sale")||"kund";
+  if(/come back|callback|call back|go back|återkom|aterkom|later|kom tillbaka|revisit/.test(lv))return byFlag("revisit")||"igen";
+  if(/interest|lead|hot|warm|intresse|appoint|möte/.test(lv))return byFlag("lead")||"int";
+  if(/not interested|nej/.test(lv))return byFlag("closed")||"nej";
+  return (stList().find(x=>x.flag==="none")||{}).k||"borta"}
 function splitAddr(a){a=(a||"").trim();let m=a.match(/^(.*?)[\s,]+(\d+\s*[A-Za-z]?(?:\s*-\s*\d+)?)$/);if(m)return {street:m[1].trim(),num:m[2].replace(/\s+/g,"")};
   m=a.match(/^(\d+\s*[A-Za-z]?)\s+(.*)$/);if(m)return {street:m[2].trim(),num:m[1].replace(/\s+/g,"")};return {street:a,num:""}}
 function readImport(file){
@@ -779,7 +965,7 @@ function importSheet(head,m,items,dup,total){
     <div class="sec"><div class="card" style="gap:6px">
       <div><b>${total}</b> ${t("impFound")} · <b>${items.length}</b> ${t("impNew")} · ${dup} ${t("impDup")}</div>
       ${noPos?`<div class="sub" style="margin:0"><b>${noPos}</b> ${t("impNoPos")}</div>`:""}
-      <div class="chips">${Object.entries(stc).map(([k,n])=>`<span class="pill" style="--c:${k==="ny"?"var(--muted)":ST[k].c}">${t("st_"+k)} · ${n}</span>`).join("")}</div></div>
+      <div class="chips">${Object.entries(stc).map(([k,n])=>`<span class="pill" style="--c:${k==="ny"?"var(--muted)":st(k).color}">${esc(stLabel(k))} ${n}</span>`).join("")}</div></div>
     <h3>${t("impCols")}</h3><div class="sub" style="margin:0">${Object.entries(m).map(([k,i])=>`${k} ← <b>${esc(head[i])}</b>`).join(" · ")}</div>
     <div class="list">${items.slice(0,3).map(i=>`<div class="li" style="cursor:default;grid-template-columns:1fr auto"><span class="t"><b>${esc((i.street+" "+i.num).trim()||"—")}</b><small>${esc((i.first+" "+i.last).trim())} ${esc(i.phone)} · ${esc(i.statusRaw||"")}</small></span><span class="r">${esc(rep(i.owner).name)}</span></div>`).join("")}</div>
     <div id="impProg" class="sub" hidden></div>
@@ -800,7 +986,7 @@ async function runImport(items){
   for(let s0=0;s0<ok.length;s0+=400){
     const b=db.batch();
     ok.slice(s0,s0+400).forEach(i=>{const ref=db.collection("leads").doc();
-      const doc={lat:i.lat,lng:i.lng,street:i.street,num:i.num,first:i.first,last:i.last,phone:i.phone,email:i.email,note:"",status:i.status,revisit:i.status==="igen"?dstr(new Date(Date.now()+7*DAY)):null,meeting:null,owner:i.owner,created:i.t,updated:Date.now(),
+      const doc={lat:i.lat,lng:i.lng,street:i.street,num:i.num,first:i.first,last:i.last,phone:i.phone,email:i.email,note:"",status:i.status,revisit:isRevisitSt(i.status)?dstr(new Date(Date.now()+7*DAY)):null,meeting:null,owner:i.owner,created:i.t,updated:Date.now(),
         hist:i.status==="ny"?[]:[{t:i.t,rep:i.owner,s:i.status}],notes:i.note?[{t:i.t,rep:i.owner,text:i.note}]:[],source:"salesrabbit"};
       b.set(ref,doc)});
     try{await b.commit()}catch(e){err(e);break}
