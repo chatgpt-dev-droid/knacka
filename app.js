@@ -30,9 +30,13 @@ const T={sv:{
  deactivated:"Ditt konto är avstängt. Kontakta chefen.",
  // team/areas
  team:"Team",approve:"Godkänn",deactivate:"Stäng av",activate:"Aktivera",pending:"Väntar",inactive:"Avstängd",roleLbl:"Roll",
- drawArea:"Rita nytt område",drawHelp:"Tryck på kartan för varje hörn av området.",undo:"Ångra",areaName:"Områdets namn",assigned:"Ansvarig säljare",saveArea:"Spara område",areaNeed3:"Sätt minst tre hörn.",delArea:"Ta bort",delAreaQ:"Ta bort området?",
+ drawArea:"Rita nytt område",drawHelp:"Tryck på kartan för varje hörn av området.",undo:"Ångra",undone:"Ångrat",areaName:"Områdets namn",assigned:"Ansvarig säljare",saveArea:"Spara område",areaNeed3:"Sätt minst tre hörn.",delArea:"Ta bort",delAreaQ:"Ta bort området?",
  nobody:"Ingen",offline:"Offline – ändringar sparas och skickas när du har nät igen.",
- noAreas:"Inga områden än.",satView:"Satellit",mapView:"Karta"},
+ noAreas:"Inga områden än.",satView:"Satellit",mapView:"Karta",
+ notes:"Anteckningar",addNote:"Spara anteckning",noteAdded:"Anteckning sparad",noNotes:"Inga anteckningar än.",
+ gcal:"+ Google-kalender",ical:"+ iPhone-kalender",revToday:"återbesök idag",
+ planRoute:"Planera rutt",routeStops:"stopp",openGmaps:"Öppna i Google Maps",endRoute:"Avsluta rutt",routeMax:"Google Maps tar max 10 stopp åt gången – resten visas på kartan.",noStops:"Inga stopp med plats den här dagen.",
+ impTitle:"Importera från SalesRabbit",impHelp:"Exportera dina leads från SalesRabbit som CSV-fil (Leads → markera alla → Export) och välj filen här. Dubbletter hoppas över.",impPick:"Välj CSV-fil",impFound:"rader i filen",impNew:"nya leads",impDup:"finns redan",impNoPos:"saknar koordinater – adressen slås upp (ca 1 s per adress)",impGo:"Importera",impBusy:"Importerar…",impGeo:"Slår upp adresser",impDone:"Klart! Importerade",impFail:"kunde inte placeras på kartan",impCols:"Kolumner som hittades",impBad:"Kunde inte läsa filen. Är det en CSV-fil från SalesRabbit?"},
 en:{
  tMap:"Map",tLeads:"Leads",tCal:"Calendar",tComp:"Compete",tMore:"More",searchPh:"Search address or name",
  cancel:"Cancel",placeHere:"Place here",
@@ -60,9 +64,13 @@ en:{
  err_wrong:"Wrong email or password.",err_inuse:"There's already an account with that email. Log in instead.",err_weak:"The password must be at least 6 characters.",err_email:"That email address doesn't look right.",err_net:"Can't reach the server. Check your internet and try again.",err_gen:"Something went wrong. Try again.",err_name:"Enter your name.",
  deactivated:"Your account is switched off. Contact the manager.",
  team:"Team",approve:"Approve",deactivate:"Switch off",activate:"Activate",pending:"Waiting",inactive:"Switched off",roleLbl:"Role",
- drawArea:"Draw new area",drawHelp:"Tap the map at each corner of the area.",undo:"Undo",areaName:"Area name",assigned:"Assigned seller",saveArea:"Save area",areaNeed3:"Set at least three corners.",delArea:"Delete",delAreaQ:"Delete the area?",
+ drawArea:"Draw new area",drawHelp:"Tap the map at each corner of the area.",undo:"Undo",undone:"Undone",areaName:"Area name",assigned:"Assigned seller",saveArea:"Save area",areaNeed3:"Set at least three corners.",delArea:"Delete",delAreaQ:"Delete the area?",
  nobody:"Nobody",offline:"Offline – changes are saved and sent when you're back online.",
- noAreas:"No areas yet.",satView:"Satellite",mapView:"Map"}};
+ noAreas:"No areas yet.",satView:"Satellite",mapView:"Map",
+ notes:"Notes",addNote:"Save note",noteAdded:"Note saved",noNotes:"No notes yet.",
+ gcal:"+ Google Calendar",ical:"+ iPhone calendar",revToday:"revisits today",
+ planRoute:"Plan route",routeStops:"stops",openGmaps:"Open in Google Maps",endRoute:"End route",routeMax:"Google Maps takes at most 10 stops at a time – the rest are shown on the map.",noStops:"No stops with a location this day.",
+ impTitle:"Import from SalesRabbit",impHelp:"Export your leads from SalesRabbit as a CSV file (Leads → select all → Export) and choose the file here. Duplicates are skipped.",impPick:"Choose CSV file",impFound:"rows in the file",impNew:"new leads",impDup:"already exist",impNoPos:"have no coordinates – the address is looked up (about 1 s each)",impGo:"Import",impBusy:"Importing…",impGeo:"Looking up addresses",impDone:"Done! Imported",impFail:"could not be placed on the map",impCols:"Columns found",impBad:"Couldn't read the file. Is it a CSV file from SalesRabbit?"}};
 
 const CHEF_EMAILS=["hej@fiskaren.nu","karen@fiskaren.nu"];
 const STATUS=[
@@ -100,7 +108,9 @@ const lastVisit=l=>l.hist&&l.hist.length?l.hist[l.hist.length-1].t:0;
 let here=null;
 function dist(l){const p=here||CENTER;const dy=(l.lat-p[0])*111320,dx=(l.lng-p[1])*111320*Math.cos(p[0]*Math.PI/180);return Math.sqrt(dx*dx+dy*dy)}
 const fdist=m=>m<1000?Math.round(m/10)*10+" m":(m/1000).toFixed(1).replace(".",",")+" km";
-function toast(msg){const e=$("toast");e.textContent=msg;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2400)}
+function toast(msg,action,fn){const e=$("toast");e.innerHTML="";const sp=document.createElement("span");sp.textContent=msg;e.appendChild(sp);
+  if(action){const b=document.createElement("button");b.className="toastbtn";b.textContent=action;b.onclick=()=>{e.hidden=true;fn()};e.appendChild(b)}
+  e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,action?5000:2400)}
 function copyText(txt,el){try{navigator.clipboard.writeText(txt).then(()=>toast(t("copied")),()=>{if(el)el.select()})}catch(e){if(el)el.select()}}
 const telHref=p=>"tel:"+String(p||"").replace(/[^\d+]/g,"");
 const smsHref=(p,body)=>"sms:"+String(p||"").replace(/[^\d+]/g,"")+(body?"?&body="+encodeURIComponent(body):"");
@@ -204,7 +214,10 @@ function startData(){
   initMap();
   dataUnsubs.push(db.collection("users").onSnapshot(q=>{S.users=q.docs.map(d=>Object.assign({id:d.id},d.data()));renderTab();drawAreas()},e=>console.error(e)));
   dataUnsubs.push(db.collection("leads").onSnapshot(q=>{
-    S.leads=q.docs.map(d=>{const x=Object.assign({id:d.id},d.data());x.hist=x.hist||[];return x});
+    const byId=new Map(S.leads.map(l=>[l.id,l]));
+    S.leads=q.docs.map(d=>{const data=d.data();data.hist=data.hist||[];const ex=byId.get(d.id);
+      if(ex){Object.keys(ex).forEach(k=>{if(k!=="id"&&!(k in data))delete ex[k]});Object.assign(ex,data);if(pend&&pend.l===ex)Object.assign(ex,pend.patch);return ex}
+      return Object.assign({id:d.id},data)});
     drawPins();drawAddresses();statStrip();if(tab!=="map"&&tab!=="more"&&$("sheet").hidden){const y=$("v-"+tab).scrollTop;renderTab();$("v-"+tab).scrollTop=y}
   },e=>console.error(e)));
   dataUnsubs.push(db.collection("areas").onSnapshot(q=>{S.areas=q.docs.map(d=>{const x=d.data();return {id:d.id,name:x.name,rep:x.rep,color:x.color,poly:(x.poly||[]).map(p=>[p.lat,p.lng])}});drawAreas();if(tab==="more")moreView()},e=>console.error(e)));
@@ -223,6 +236,8 @@ function pinIcon(l){
   const cls="pin"+(l.status==="ny"?" new":"")+(l.id===selId?" sel":"")+(hidden?" dim":"");
   return L.divIcon({className:"",html:`<div class="${cls}" style="--c:${s.c}"><span>${s.ic}</span></div>${l.num?`<b class="pnum">${esc(l.num)}</b>`:""}`,iconSize:[26,26],iconAnchor:[13,30]});
 }
+function iconKey(l){return [l.status,l.id===selId,P.filter.hide.includes(l.status)||(P.filter.mine&&l.owner!==S.uid),l.num||""].join("|")}
+function refreshPin(id){const l=S.leads.find(x=>x.id===id);const m=markers[id];if(l&&m){const k=iconKey(l);if(m.__k!==k){m.setIcon(pinIcon(l));m.__k=k}}}
 function initMap(){
   if(map)return;
   map=L.map("map",{zoomControl:false}).setView(CENTER,17);
@@ -289,8 +304,9 @@ function drawPins(){
   const seen={};
   S.leads.forEach(l=>{
     seen[l.id]=1;
-    if(markers[l.id]){markers[l.id].setIcon(pinIcon(l));markers[l.id].setLatLng([l.lat,l.lng])}
-    else{const m=L.marker([l.lat,l.lng],{icon:pinIcon(l),keyboard:true,title:addr(l)}).addTo(map);m.on("click",()=>{if(!drawing)openLead(l.id)});markers[l.id]=m}
+    const k=iconKey(l);const m0=markers[l.id];
+    if(m0){if(m0.__k!==k){m0.setIcon(pinIcon(l));m0.__k=k}const ll=m0.getLatLng();if(ll.lat!==l.lat||ll.lng!==l.lng)m0.setLatLng([l.lat,l.lng])}
+    else{const m=L.marker([l.lat,l.lng],{icon:pinIcon(l),keyboard:true,title:addr(l)}).addTo(map);m.__k=k;m.on("click",()=>{if(!drawing)openLead(l.id)});markers[l.id]=m}
   });
   Object.keys(markers).forEach(k=>{if(!seen[k]){map.removeLayer(markers[k]);delete markers[k]}});
 }
@@ -311,6 +327,8 @@ function statStrip(){
   $("statstrip").innerHTML=`<span class="stat"><span class="av" style="width:22px;height:22px;font-size:11px">${esc((S.me.name||"?")[0])}</span>${t("today")}</span>
     <span class="stat"><b>${k}</b> ${t("knocks")}</span><span class="stat"><b>${ld}</b> ${t("leadsW")}</span><span class="stat"><b>${sa}</b> ${t("sales")}</span>`;
   const due=S.leads.filter(l=>l.revisit&&l.revisit<=todayStr()&&!["kund","aldrig","nej"].includes(l.status)&&l.owner===S.uid).length;
+  if(due)$("statstrip").insertAdjacentHTML("beforeend",`<button class="stat due" id="dueChip">↻ <b>${due}</b> ${t("revToday")}</button>`);
+  if($("dueChip"))$("dueChip").onclick=()=>{calDay=todayStr();showTab("cal")};
   $("calCount").hidden=!due;$("calCount").textContent=due;
   $("filterBadge").hidden=!(P.filter.hide.length||P.filter.mine);
   const pend=isChef()?S.users.filter(u=>!u.active&&!u.off).length:0;
@@ -318,9 +336,31 @@ function statStrip(){
 }
 
 /* ================= sheet ================= */
-function openSheet(html){$("sheet").innerHTML='<div class="grab"></div>'+html;$("sheet").hidden=false;$("scrim").hidden=false;$("sheet").scrollTop=0}
-function closeSheet(){$("sheet").hidden=true;$("scrim").hidden=true;if(selId){const id=selId;selId=null;const l=S.leads.find(x=>x.id===id);if(l&&markers[id])markers[id].setIcon(pinIcon(l))}if(tab!=="map"&&tab!=="more")renderTab()}
+let sheetHideT=null,sheetKey=null;
+function openSheet(html,key){
+  const sh=$("sheet"),sc=$("scrim");clearTimeout(sheetHideT);
+  const same=key&&key===sheetKey&&!sh.hidden&&sh.classList.contains("open");const y=sh.scrollTop;
+  sh.innerHTML='<div class="grab"></div>'+html;sheetKey=key||null;
+  if(sh.hidden){sh.hidden=false;sc.hidden=false;void sh.offsetHeight}
+  sh.classList.add("open");sc.classList.add("open");sh.scrollTop=same?y:0;
+}
+function closeSheet(){
+  flushSave();
+  const sh=$("sheet"),sc=$("scrim");sh.classList.remove("open");sc.classList.remove("open");sheetKey=null;
+  clearTimeout(sheetHideT);sheetHideT=setTimeout(()=>{sh.hidden=true;sc.hidden=true},230);
+  if(selId){const id=selId;selId=null;refreshPin(id)}
+  if(tab!=="map"&&tab!=="more")renderTab();
+}
+/* saving while typing */
+let pend=null;const noteDraft={};
+function queueSave(l,key,val){if(pend&&pend.l!==l)flushSave();if(!pend)pend={l,patch:{}};pend.patch[key]=val;l[key]=val;clearTimeout(pend.timer);pend.timer=setTimeout(flushSave,700)}
+function flushSave(){if(!pend)return;const p=pend;pend=null;clearTimeout(p.timer);updLead(p.l,p.patch);refreshPin(p.l.id)}
+window.addEventListener("pagehide",flushSave);document.addEventListener("visibilitychange",()=>{if(document.hidden)flushSave()});
 $("scrim").onclick=closeSheet;
+(function(){const sh=$("sheet");let y0=null,dy=0;
+  sh.addEventListener("touchstart",e=>{const tg=e.target;if(sh.scrollTop>0&&!tg.closest(".grab"))return;if(tg.closest("input,textarea,select,button,a"))return;y0=e.touches[0].clientY;dy=0;sh.style.transition="none"},{passive:true});
+  sh.addEventListener("touchmove",e=>{if(y0==null)return;dy=Math.max(0,e.touches[0].clientY-y0);if(dy>0)sh.style.transform=`translateY(${dy}px)`},{passive:true});
+  sh.addEventListener("touchend",()=>{if(y0==null)return;sh.style.transition="";sh.style.transform="";if(dy>90)closeSheet();y0=null})})();
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
 const icon={
  call:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
@@ -331,15 +371,19 @@ const icon={
 function toLocalInput(ts){const d=new Date(ts);return dstr(d)+"T"+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
 
 function openLead(id){
+  if(pend&&pend.l.id!==id)flushSave();
   const l=S.leads.find(x=>x.id===id);if(!l)return;
   const prev=selId;selId=id;
-  if(map){if(prev&&markers[prev]){const p=S.leads.find(x=>x.id===prev);if(p)markers[prev].setIcon(pinIcon(p))}if(markers[id])markers[id].setIcon(pinIcon(l))}
+  if(map){if(prev&&prev!==id)refreshPin(prev);refreshPin(id)}
+  const notes=(l.notes||[]).slice();if(l.note)notes.unshift({t:l.created||0,rep:l.owner,text:l.note,legacy:1});
+  const calRow=(kind)=>`<div class="chips"><a class="chip" href="${gcalUrl(l,kind)}" target="_blank" rel="noopener">${t("gcal")}</a><a class="chip" href="${icsHref(l,kind)}" download="${kind==="mote"?"mote":"aterbesok"}.ics">${t("ical")}</a></div>`;
   const area=areaOf(l.lat,l.lng);const s=ST[l.status]||ST.ny;const nm=nameOf(l);
   const revChip=w=>{const d=dstr(new Date(Date.now()+w*7*DAY));return `<button class="chip" data-rev="${d}" aria-pressed="${l.revisit===d}">${t("w"+w)}</button>`};
   const canDel=isChef()||l.owner===S.uid;
   openSheet(`
     <div class="shead"><h2>${esc(addr(l))}</h2><button class="x" id="sx" aria-label="${t("cancel")}">${icon.x}</button></div>
-    <div class="sub">${nm?esc(nm)+" · ":""}<span class="pill" style="--c:${l.status==="ny"?"var(--muted)":s.c}">${t("st_"+l.status)}</span> · ${area?esc(area.name):t("noArea")} · ${esc(rep(l.owner).name)} · ${t("lastVisit")} ${rel(lastVisit(l))}</div>
+    <div class="leadmeta"><span class="pill" style="--c:${l.status==="ny"?"var(--muted)":s.c}">${t("st_"+l.status)}</span>${nm?`<b>${esc(nm)}</b>`:""}</div>
+    <div class="sub">${area?esc(area.name):t("noArea")}, ${esc(rep(l.owner).name)}, ${t("lastVisit")} ${rel(lastVisit(l))}</div>
     <div class="stbar">${STATUS.map(x=>`<button class="stb" data-st="${x.k}" aria-pressed="${l.status===x.k}"><i style="--c:${x.c}">${x.ic}</i>${t("st_"+x.k)}</button>`).join("")}<button class="stb" id="toMap"><i style="--c:var(--soft);color:var(--accent)">${icon.nav}</i>${t("showMap")}</button></div>
     ${l.revisit&&!["kund","nej","aldrig"].includes(l.status)?`<div class="reminder" style="margin-top:14px">${icon.rev}<span>${t("remindOn")}: ${fdate(l.revisit)}</span></div>`:""}
     ${l.meeting?`<div class="reminder" style="margin-top:10px;--st-igen:var(--st-mote)">◷ <span>${t("meeting")}: ${fdt(l.meeting)}</span></div>`:""}
@@ -360,27 +404,40 @@ function openLead(id){
     <div class="sec"><h3>${t("revisit")}</h3>
       <div class="chips">${[1,2,4,8].map(revChip).join("")}<button class="chip" id="revClear">${t("clear")}</button></div>
       <input type="date" id="f_rev" value="${l.revisit||""}" aria-label="${t("revisit")}">
+      ${l.revisit?calRow("igen"):""}
     </div>
-    <div class="sec"><h3>${t("meeting")}</h3><input type="datetime-local" id="f_meet" value="${l.meeting?toLocalInput(l.meeting):""}" aria-label="${t("meeting")}"></div>
-    <div class="sec"><h3>${t("note")}</h3><textarea id="f_note" rows="3" placeholder="${t("notePh")}">${esc(l.note)}</textarea></div>
+    <div class="sec"><h3>${t("meeting")}</h3><input type="datetime-local" id="f_meet" value="${l.meeting?toLocalInput(l.meeting):""}" aria-label="${t("meeting")}">${l.meeting?calRow("mote"):""}</div>
+    <div class="sec"><h3>${t("notes")}</h3>
+      <div class="noteadd"><textarea id="f_newnote" rows="2" placeholder="${t("notePh")}">${esc(noteDraft[l.id]||"")}</textarea><button class="btn sm" id="addNote">${t("addNote")}</button></div>
+      ${notes.length?`<div class="notes">${notes.slice().reverse().map(n=>`<div class="note1"><p>${esc(n.text)}</p><small>${esc(rep(n.rep).name)}${n.legacy?"":" · "+fdt(n.t)}</small></div>`).join("")}</div>`:`<div class="sub">${t("noNotes")}</div>`}
+    </div>
     ${l.hist.length?`<div class="sec"><h3>${t("history")}</h3><div class="timeline">${l.hist.slice().reverse().map(h=>`<div class="tl"><i style="--c:${(ST[h.s]||ST.ny).c}"></i><span>${t("st_"+h.s)} · ${esc(rep(h.rep).name)}</span><small>${fdt(h.t)}</small></div>`).join("")}</div></div>`:""}
-    ${canDel?`<div class="sec" id="delWrap"><button class="btn danger" id="delBtn">${t("del")}</button></div>`:""}`);
+    ${canDel?`<div class="sec" id="delWrap"><button class="btn danger" id="delBtn">${t("del")}</button></div>`:""}`,"lead:"+l.id);
   $("sx").onclick=closeSheet;
   $("sheet").querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{
+    flushSave();try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}
     const k=b.dataset.st;const h={t:Date.now(),rep:S.uid,s:k};
+    const before={status:l.status,revisit:l.revisit||null,owner:l.owner||null};
     const patch={status:k};
     if(k==="igen"&&!l.revisit)patch.revisit=dstr(new Date(Date.now()+14*DAY));
     if(k==="kund"||k==="nej"||k==="aldrig")patch.revisit=null;
     if(!l.owner)patch.owner=S.uid;
     l.hist.push(h);Object.assign(l,patch);patch.updated=Date.now();patch.hist=FV.arrayUnion(h);
     db.collection("leads").doc(l.id).set(patch,{merge:true}).catch(err);
-    drawPins();statStrip();toast(t("statusSet")+t("st_"+k));
+    refreshPin(l.id);statStrip();
+    toast(t("statusSet")+t("st_"+k),t("undo"),()=>{l.hist=l.hist.filter(x=>x!==h);Object.assign(l,before);
+      db.collection("leads").doc(l.id).set(Object.assign({},before,{hist:FV.arrayRemove(h),updated:Date.now()}),{merge:true}).catch(err);refreshPin(l.id);statStrip();toast(t("undone"))});
     if(k==="borta"||k==="nej"||k==="aldrig")closeSheet();else openLead(l.id);
   });
   $("toMap").onclick=()=>{closeSheet();showTab("map");map.flyTo([l.lat,l.lng],18);setTimeout(()=>openLead(l.id),450)};
-  const bind=(id,key,tr,reopen)=>{const e=$(id);e.addEventListener("change",()=>{updLead(l,{[key]:tr?tr(e.value):e.value});drawPins();statStrip();toast(t("saved"));if(reopen)openLead(l.id)})};
-  bind("f_first","first",null,true);bind("f_last","last");bind("f_phone","phone",null,true);bind("f_email","email");bind("f_street","street");bind("f_num","num");bind("f_note","note");
-  bind("f_rev","revisit",v=>v||null,true);bind("f_meet","meeting",v=>v?new Date(v).getTime():null,true);
+  const bindText=(id,key)=>{const e=$(id);e.addEventListener("input",()=>queueSave(l,key,e.value));e.addEventListener("blur",flushSave)};
+  bindText("f_first","first");bindText("f_last","last");bindText("f_phone","phone");bindText("f_email","email");bindText("f_street","street");bindText("f_num","num");
+  const bindDate=(id,key,tr)=>{const e=$(id);e.addEventListener("change",()=>{flushSave();updLead(l,{[key]:tr(e.value)});statStrip();toast(t("saved"));openLead(l.id)})};
+  bindDate("f_rev","revisit",v=>v||null);bindDate("f_meet","meeting",v=>v?new Date(v).getTime():null);
+  const nn=$("f_newnote");nn.addEventListener("input",()=>{noteDraft[l.id]=nn.value});
+  $("addNote").onclick=()=>{const txt=nn.value.trim();if(!txt)return nn.focus();flushSave();const n={t:Date.now(),rep:S.uid,text:txt};
+    l.notes=(l.notes||[]).concat(n);delete noteDraft[l.id];
+    db.collection("leads").doc(l.id).set({notes:FV.arrayUnion(n),updated:Date.now()},{merge:true}).catch(err);toast(t("noteAdded"));openLead(l.id)};
   $("sheet").querySelectorAll("[data-rev]").forEach(b=>b.onclick=()=>{updLead(l,{revisit:b.dataset.rev});statStrip();openLead(l.id);toast(t("remindOn")+": "+fdate(l.revisit))});
   $("revClear").onclick=()=>{updLead(l,{revisit:null});statStrip();openLead(l.id)};
   if($("delBtn"))$("delBtn").onclick=()=>{$("delWrap").innerHTML=`<div class="sub" style="font-weight:700;color:var(--ink)">${t("delQ")}</div><div class="confirm"><button class="btn ghost" id="delNo">${t("cancel")}</button><button class="btn danger" id="delYes">${t("yesDel")}</button></div>`;
@@ -492,7 +549,7 @@ function liRow(l,extra){
   const s=ST[l.status]||ST.ny;const nm=nameOf(l);
   const right=extra||(l.revisit&&!["kund","nej","aldrig"].includes(l.status)?`↻ ${fdate(l.revisit)}`:fdist(dist(l)));
   return `<button class="li" data-id="${l.id}"><span class="dot${l.status==="ny"?" new":""}" style="--c:${s.c}">${s.ic||"·"}</span>
-    <span class="t"><b>${esc(nm||addr(l))}</b><small>${nm?esc(addr(l))+" · ":""}<span class="pill" style="--c:${l.status==="ny"?"var(--muted)":s.c}">${t("st_"+l.status)}</span> · ${esc(rep(l.owner).name)} · ${rel(lastVisit(l))}</small></span>
+    <span class="t"><b>${esc(nm||addr(l))}</b><small>${nm?esc(addr(l))+", ":""}${esc(rep(l.owner).name)}, ${rel(lastVisit(l))}</small><span class="pill" style="--c:${l.status==="ny"?"var(--muted)":s.c};margin-top:4px">${t("st_"+l.status)}</span></span>
     <span class="r">${right}</span></button>`;
 }
 function bindRows(root){root.querySelectorAll(".li[data-id]").forEach(b=>b.onclick=()=>openLead(b.dataset.id))}
@@ -518,11 +575,12 @@ function calView(){
     <div class="phead"><h1>${t("calTitle")}</h1></div>
     <div class="days">${days.map(d=>{const dt=new Date(d+"T12:00");const has=calItems(d).length;return `<button class="day" data-d="${d}" aria-pressed="${d===calDay}">${dt.toLocaleDateString(loc(),{weekday:"short"})}<b>${dt.getDate()}</b>${has?'<span class="n"></span>':""}</button>`}).join("")}</div>
     ${overdue.length&&calDay===ts?`<h3>${t("overdue")} · ${overdue.length}</h3><div class="list">${overdue.map(l=>liRow(l,`<span style="color:var(--st-nej)">${fdate(l.revisit)}</span>`)).join("")}</div>`:""}
-    <div class="phead"><h3>${fdate(calDay)} · ${items.length}</h3>${withPhone.length?`<button class="btn sm" id="bulk">${t("sendAll")} (${withPhone.length})</button>`:""}</div>
+    <div class="phead"><h3>${fdate(calDay)} · ${items.length}</h3><span class="row" style="gap:6px">${(items.length||(calDay===ts&&overdue.length))?`<button class="btn sm" id="route">${t("planRoute")}</button>`:""}${withPhone.length?`<button class="btn sm ghost" id="bulk">${t("sendAll")} (${withPhone.length})</button>`:""}</span></div>
     <div class="list">${items.length?items.map(e=>liRow(e.l,e.kind==="mote"?`◷ ${ftime(e.l.meeting)}`:`↻ ${t("revisit")}`)).join(""):`<div class="empty">${t("nothingDay")}</div>`}</div>`;
   bindRows($("calPane"));
   $("calPane").querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{calDay=b.dataset.d;calView()});
   if($("bulk"))$("bulk").onclick=()=>bulkSms(withPhone.map(e=>e.l));
+  if($("route"))$("route").onclick=()=>{const set=new Map();items.forEach(e=>set.set(e.l.id,e.l));if(calDay===ts)overdue.forEach(l=>set.set(l.id,l));planRoute([...set.values()])};
 }
 function bulkSms(list){
   const render=()=>{openSheet(`
@@ -578,6 +636,7 @@ function moreView(){
     <div class="phead"><h3>${t("areas")}</h3><button class="btn sm" id="newArea">${t("drawArea")}</button></div>
     <div class="list">${S.areas.length?S.areas.map(a=>{const ls=S.leads.filter(l=>inPoly(l.lat,l.lng,a.poly));const v=ls.filter(l=>l.status!=="ny").length;return `<div class="li" style="cursor:default;grid-template-columns:1fr auto" id="ar_${a.id}"><span class="t"><b>${esc(a.name)}</b><small>${v}/${ls.length} ${t("visited")}</small><span class="bar" style="display:block;margin-top:6px"><i style="width:${ls.length?v/ls.length*100:0}%;background:${a.color||"var(--accent)"}"></i></span></span>
       <span class="r"><select data-a="${a.id}" aria-label="${t("assigned")}" style="width:auto;padding:6px 8px"><option value="">${t("nobody")}</option>${team().map(u=>`<option value="${u.id}" ${a.rep===u.id?"selected":""}>${esc(u.name)}</option>`).join("")}</select> <button class="btn sm ghost" data-delarea="${a.id}">${t("delArea")}</button></span></div>`}).join(""):`<div class="empty">${t("noAreas")}</div>`}</div>`:""}
+    ${chef?`<h3>${t("impTitle")}</h3><div class="card"><div class="sub" style="margin:0">${t("impHelp")}</div><label class="btn ghost" for="impFile" style="cursor:pointer">${t("impPick")}</label><input type="file" id="impFile" accept=".csv,text/csv" hidden></div>`:""}
     <h3>${t("tmpl")}</h3>
     <div class="card"><textarea id="tmpl" rows="4" ${chef?"":"readonly"}>${esc(S.tmpl||t("tmplDefault"))}</textarea><div class="sub" style="margin:0">${chef?t("tmplHelp"):t("tmplChefOnly")}</div></div>
     <h3>${t("statuses")}</h3>
@@ -594,10 +653,160 @@ function moreView(){
     $("morePane").querySelectorAll("[data-delarea]").forEach(b=>b.onclick=()=>{const row=$("ar_"+b.dataset.delarea);row.querySelector(".r").innerHTML=`<span style="font-size:13px;font-weight:700;color:var(--ink)">${t("delAreaQ")}</span> <button class="btn sm ghost" data-no>${t("cancel")}</button> <button class="btn sm danger" data-yes>${t("yesDel")}</button>`;
       row.querySelector("[data-no]").onclick=moreView;row.querySelector("[data-yes]").onclick=()=>db.collection("areas").doc(b.dataset.delarea).delete().catch(err)});
     $("newArea").onclick=startDrawing;
+    $("impFile").onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)readImport(f);e.target.value=""};
     $("tmpl").onchange=()=>{const v=$("tmpl").value.trim();db.collection("settings").doc("main").set({tmpl:v&&v!==t("tmplDefault")?v:null},{merge:true}).then(()=>toast(t("saved"))).catch(err)};
   }
   $("lsv").onclick=()=>{P.lang="sv";savePrefs();applyLang();moreView()};
   $("len").onclick=()=>{P.lang="en";savePrefs();applyLang();moreView()};
+}
+
+
+/* ================= calendar export ================= */
+function calTimes(l,kind){
+  if(kind==="mote"&&l.meeting){const s=new Date(l.meeting),e=new Date(l.meeting+30*6e4);return {s,e,allDay:false}}
+  const d=new Date((l.revisit||todayStr())+"T00:00:00");return {s:d,e:new Date(d.getTime()+DAY),allDay:true};
+}
+const z2=n=>String(n).padStart(2,"0");
+const utcStamp=d=>d.getUTCFullYear()+z2(d.getUTCMonth()+1)+z2(d.getUTCDate())+"T"+z2(d.getUTCHours())+z2(d.getUTCMinutes())+"00Z";
+const dayStamp=d=>d.getFullYear()+z2(d.getMonth()+1)+z2(d.getDate());
+function calText(l,kind){return {title:(kind==="mote"?t("meeting"):t("revisit"))+": "+(nameOf(l)||addr(l)),details:[nameOf(l),l.phone,(l.notes&&l.notes.length?l.notes[l.notes.length-1].text:l.note)||""].filter(Boolean).join("\n")+"\nKnacka – app.fiskaren.nu",where:addr(l)}}
+function gcalUrl(l,kind){const c=calTimes(l,kind),x=calText(l,kind);const dates=c.allDay?dayStamp(c.s)+"/"+dayStamp(c.e):utcStamp(c.s)+"/"+utcStamp(c.e);
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(x.title)+"&dates="+dates+"&details="+encodeURIComponent(x.details)+"&location="+encodeURIComponent(x.where)}
+function icsHref(l,kind){const c=calTimes(l,kind),x=calText(l,kind);const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Fiskaren//Knacka//SV","BEGIN:VEVENT","UID:"+l.id+"-"+kind+"@knacka","DTSTAMP:"+utcStamp(new Date()),
+  c.allDay?"DTSTART;VALUE=DATE:"+dayStamp(c.s):"DTSTART:"+utcStamp(c.s),c.allDay?"DTEND;VALUE=DATE:"+dayStamp(c.e):"DTEND:"+utcStamp(c.e),
+  "SUMMARY:"+x.title.replace(/[,;]/g," "),"LOCATION:"+x.where.replace(/[,;]/g," "),"DESCRIPTION:"+x.details.replace(/\n/g,"\\n").replace(/[,;]/g," "),
+  "BEGIN:VALARM","TRIGGER:-PT30M","ACTION:DISPLAY","DESCRIPTION:"+x.title.replace(/[,;]/g," "),"END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+  return "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics)}
+
+/* ================= route planning ================= */
+let routeLayer=null;
+function legM(a,b){const dy=(a[0]-b[0])*111320,dx=(a[1]-b[1])*111320*Math.cos(a[0]*Math.PI/180);return Math.sqrt(dx*dx+dy*dy)}
+function planRoute(list){
+  const stops=list.filter(l=>l.lat&&l.lng);
+  if(!stops.length)return toast(t("noStops"));
+  const start=here||(map?[map.getCenter().lat,map.getCenter().lng]:CENTER);
+  // nearest neighbour
+  const left=stops.slice(),order=[];let cur=start;
+  while(left.length){let bi=0,bd=Infinity;left.forEach((l,i)=>{const d=legM(cur,[l.lat,l.lng]);if(d<bd){bd=d;bi=i}});const n=left.splice(bi,1)[0];order.push(n);cur=[n.lat,n.lng]}
+  // 2-opt
+  const P=[start,...order.map(l=>[l.lat,l.lng])];
+  const len=a=>{let s=0;for(let i=1;i<a.length;i++)s+=legM(a[i-1],a[i]);return s};
+  let improved=true,guard=0;
+  while(improved&&guard++<50){improved=false;
+    for(let i=1;i<P.length-1;i++)for(let k=i+1;k<P.length;k++){
+      const a=P[i-1],b=P[i],c=P[k],d=P[k+1];
+      const delta=legM(a,c)+(d?legM(b,d):0)-legM(a,b)-(d?legM(c,d):0);
+      if(delta<-1){P.splice(i,k-i+1,...P.slice(i,k+1).reverse());order.splice(i-1,k-i+1,...order.slice(i-1,k).reverse());improved=true}
+    }}
+  showRoute(start,order,len(P));
+}
+function showRoute(start,order,meters){
+  closeSheet();showTab("map");endRoute(true);
+  routeLayer=L.layerGroup().addTo(map);
+  const pts=[start,...order.map(l=>[l.lat,l.lng])];
+  L.polyline(pts,{color:"#2d7ff9",weight:4,opacity:.85,dashArray:"8 6",interactive:false}).addTo(routeLayer);
+  order.forEach((l,i)=>L.marker([l.lat,l.lng],{icon:L.divIcon({className:"",html:`<div class="rnum">${i+1}</div>`,iconSize:[22,22],iconAnchor:[11,42]}),zIndexOffset:900,interactive:false}).addTo(routeLayer));
+  map.fitBounds(L.latLngBounds(pts).pad(0.15));
+  const first=order.slice(0,10);
+  const dest=first[first.length-1];
+  const wp=first.slice(0,-1).map(l=>l.lat+","+l.lng).join("|");
+  const url="https://www.google.com/maps/dir/?api=1"+(here?"&origin="+here[0]+","+here[1]:"")+"&destination="+dest.lat+","+dest.lng+(wp?"&waypoints="+encodeURIComponent(wp):"");
+  $("routeInfo").innerHTML=`<b>${order.length} ${t("routeStops")}</b> · ${fdist(meters)}`+(order.length>10?`<small>${t("routeMax")}</small>`:"");
+  $("routeGo").href=url;$("routebar").hidden=false;$("fabs").hidden=true;
+}
+function endRoute(silent){if(routeLayer){map.removeLayer(routeLayer);routeLayer=null}$("routebar").hidden=true;if(!silent)$("fabs").hidden=false}
+$("routeEnd").onclick=()=>endRoute();
+
+/* ================= import (SalesRabbit CSV) ================= */
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,"");
+  const first=text.split(/\r?\n/)[0]||"";const delim=(first.split(";").length>first.split(",").length)?";":(first.split("\t").length>first.split(",").length?"\t":",");
+  const rows=[];let row=[],f="",q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===delim){row.push(f);f=""}else if(c==="\n"){row.push(f);rows.push(row);row=[];f=""}else if(c!=="\r")f+=c}
+  if(f||row.length){row.push(f);rows.push(row)}
+  return rows.filter(r=>r.some(x=>x.trim()));
+}
+const COLS={
+  first:["first name","firstname","förnamn","fornamn","first"],last:["last name","lastname","efternamn","last"],name:["full name","name","namn","customer","kund"],
+  phone:["phone","mobile","mobil","telefon","cell","tel"],email:["email","e-mail","e-post","mail"],
+  street:["street address","address 1","address1","address","adress","street","gata","gatuadress"],num:["house number","street number","husnummer","nummer"],
+  zip:["zip","postal","postnummer","postcode"],city:["city","ort","stad","postort"],
+  lat:["latitude","lat"],lng:["longitude","lng","lon","long"],status:["status","disposition","lead status"],
+  note:["notes","note","anteckning","anteckningar","comments","kommentar"],owner:["owner","assigned","rep","user","säljare","saljare","created by"],
+  date:["last visit","updated","modified","date","created","datum"]};
+function mapCols(head){
+  const h=head.map(x=>x.trim().toLowerCase());const used=new Set();const m={};
+  Object.entries(COLS).forEach(([k,alts])=>{for(const a of alts){const i=h.findIndex((x,j)=>!used.has(j)&&(x===a));if(i>=0){m[k]=i;used.add(i);return}}
+    for(const a of alts){const i=h.findIndex((x,j)=>!used.has(j)&&x.includes(a));if(i>=0){m[k]=i;used.add(i);return}}});
+  return m;
+}
+function mapStatus(v){v=(v||"").toLowerCase();
+  if(/do not|dnk|knacka ej|no soliciting/.test(v))return"aldrig";if(/not home|inte hemma|no answer|nh\b/.test(v))return"borta";
+  if(/not interested|nej|no\b|ni\b/.test(v))return"nej";if(/appoint|möte|mote|booked/.test(v))return"mote";
+  if(/sold|customer|kund|sale|won/.test(v))return"kund";if(/come back|callback|call back|go back|återkom|aterkom|later|kom tillbaka|revisit/.test(v))return"igen";
+  if(/interest|lead|hot|warm|intresse/.test(v))return"int";return v?"borta":"ny"}
+function splitAddr(a){a=(a||"").trim();let m=a.match(/^(.*?)[\s,]+(\d+\s*[A-Za-z]?(?:\s*-\s*\d+)?)$/);if(m)return {street:m[1].trim(),num:m[2].replace(/\s+/g,"")};
+  m=a.match(/^(\d+\s*[A-Za-z]?)\s+(.*)$/);if(m)return {street:m[2].trim(),num:m[1].replace(/\s+/g,"")};return {street:a,num:""}}
+function readImport(file){
+  const fr=new FileReader();
+  fr.onload=()=>{let rows;try{rows=parseCSV(String(fr.result))}catch(e){rows=null}
+    if(!rows||rows.length<2)return toast(t("impBad"));
+    const head=rows[0],m=mapCols(head);
+    if(m.street==null&&m.lat==null)return toast(t("impBad"));
+    const g=(r,k)=>m[k]!=null?(r[m[k]]||"").trim():"";
+    const exist=new Set(S.leads.map(l=>((l.street||"")+"|"+(l.num||"")).toLowerCase()));
+    const items=[];let dup=0;
+    rows.slice(1).forEach(r=>{
+      let {street,num}=splitAddr(g(r,"street"));if(g(r,"num"))num=g(r,"num");
+      const key=(street+"|"+num).toLowerCase();if(street&&exist.has(key)){dup++;return}exist.add(key);
+      let first=g(r,"first"),last=g(r,"last");if(!first&&!last&&g(r,"name")){const p=g(r,"name").split(/\s+/);first=p.shift()||"";last=p.join(" ")}
+      const lat=parseFloat(g(r,"lat").replace(",",".")),lng=parseFloat(g(r,"lng").replace(",","."));
+      const ow=g(r,"owner").toLowerCase();const owner=(team().find(u=>ow&&(u.email.toLowerCase()===ow||ow.includes((u.name||"").toLowerCase().split(" ")[0])))||{}).id||S.uid;
+      const dt=Date.parse(g(r,"date"));
+      items.push({first,last,phone:g(r,"phone"),email:g(r,"email"),street,num,zip:g(r,"zip"),city:g(r,"city"),
+        lat:isFinite(lat)?lat:null,lng:isFinite(lng)?lng:null,status:mapStatus(g(r,"status")),statusRaw:g(r,"status"),note:g(r,"note"),owner,t:isFinite(dt)?dt:Date.now()});
+    });
+    importSheet(head,m,items,dup,rows.length-1);
+  };
+  fr.readAsText(file);
+}
+function importSheet(head,m,items,dup,total){
+  const noPos=items.filter(i=>i.lat==null).length;
+  const stc={};items.forEach(i=>stc[i.status]=(stc[i.status]||0)+1);
+  openSheet(`<div class="shead"><h2>${t("impTitle")}</h2><button class="x" id="sx">${icon.x}</button></div>
+    <div class="sec"><div class="card" style="gap:6px">
+      <div><b>${total}</b> ${t("impFound")} · <b>${items.length}</b> ${t("impNew")} · ${dup} ${t("impDup")}</div>
+      ${noPos?`<div class="sub" style="margin:0"><b>${noPos}</b> ${t("impNoPos")}</div>`:""}
+      <div class="chips">${Object.entries(stc).map(([k,n])=>`<span class="pill" style="--c:${k==="ny"?"var(--muted)":ST[k].c}">${t("st_"+k)} · ${n}</span>`).join("")}</div></div>
+    <h3>${t("impCols")}</h3><div class="sub" style="margin:0">${Object.entries(m).map(([k,i])=>`${k} ← <b>${esc(head[i])}</b>`).join(" · ")}</div>
+    <div class="list">${items.slice(0,3).map(i=>`<div class="li" style="cursor:default;grid-template-columns:1fr auto"><span class="t"><b>${esc((i.street+" "+i.num).trim()||"—")}</b><small>${esc((i.first+" "+i.last).trim())} ${esc(i.phone)} · ${esc(i.statusRaw||"")}</small></span><span class="r">${esc(rep(i.owner).name)}</span></div>`).join("")}</div>
+    <div id="impProg" class="sub" hidden></div>
+    <button class="btn" id="impGo" ${items.length?"":"disabled"}>${t("impGo")} ${items.length}</button></div>`,"import");
+  $("sx").onclick=closeSheet;
+  $("impGo").onclick=()=>runImport(items);
+}
+async function geocode(i){
+  const q=[(i.street+" "+i.num).trim(),[i.zip,i.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  try{const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=se&q="+encodeURIComponent(q));const j=await r.json();if(j&&j[0])return [parseFloat(j[0].lat),parseFloat(j[0].lon)]}catch(e){}
+  return null;
+}
+async function runImport(items){
+  const go=$("impGo"),pr=$("impProg");go.disabled=true;go.textContent=t("impBusy");pr.hidden=false;
+  let failed=0;const need=items.filter(i=>i.lat==null);
+  for(let n=0;n<need.length;n++){pr.textContent=`${t("impGeo")}: ${n+1} / ${need.length}`;const p=await geocode(need[n]);if(p){need[n].lat=p[0];need[n].lng=p[1]}else failed++;await new Promise(r=>setTimeout(r,1100))}
+  const ok=items.filter(i=>i.lat!=null);let done=0;
+  for(let s0=0;s0<ok.length;s0+=400){
+    const b=db.batch();
+    ok.slice(s0,s0+400).forEach(i=>{const ref=db.collection("leads").doc();
+      const doc={lat:i.lat,lng:i.lng,street:i.street,num:i.num,first:i.first,last:i.last,phone:i.phone,email:i.email,note:"",status:i.status,revisit:i.status==="igen"?dstr(new Date(Date.now()+7*DAY)):null,meeting:null,owner:i.owner,created:i.t,updated:Date.now(),
+        hist:i.status==="ny"?[]:[{t:i.t,rep:i.owner,s:i.status}],notes:i.note?[{t:i.t,rep:i.owner,text:i.note}]:[],source:"salesrabbit"};
+      b.set(ref,doc)});
+    try{await b.commit()}catch(e){err(e);break}
+    done=Math.min(ok.length,s0+400);pr.textContent=`${t("impBusy")} ${done} / ${ok.length}`;
+  }
+  pr.textContent=`${t("impDone")} ${done}.`+(failed?` ${failed} ${t("impFail")}.`:"");go.textContent=t("done");go.disabled=false;go.onclick=closeSheet;
 }
 
 /* ================= tabs ================= */

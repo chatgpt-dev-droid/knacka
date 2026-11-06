@@ -70,7 +70,7 @@ main{flex:1;min-height:0;position:relative}
 .leaflet-control-attribution{font-size:10px;background:color-mix(in srgb,var(--surface) 80%,transparent);color:var(--muted);padding:1px 6px;border-top-left-radius:6px}
 .leaflet-control-attribution a{color:var(--muted)}
 .leaflet-tooltip{position:absolute;pointer-events:none;white-space:nowrap}
-.area-label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--ink);box-shadow:var(--shadow)}
+.area-label{font-size:12px;font-weight:700;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--ink);box-shadow:var(--shadow)}
 /* fallback street pattern when tiles can't load */
 #map.notiles{background-color:var(--mapbg);background-image:linear-gradient(var(--soft) 2px,transparent 2px),linear-gradient(90deg,var(--soft) 2px,transparent 2px);background-size:46px 46px}
 
@@ -85,6 +85,23 @@ main{flex:1;min-height:0;position:relative}
 .zfar .pnum{display:none}
 .hn{min-width:22px;height:18px;padding:0 4px;border-radius:6px;background:rgba(255,255,255,.95);border:1.5px solid #8d9aa6;color:#10252d;font-size:10.5px;font-weight:800;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.2);white-space:nowrap}
 .hn:active{background:#0b6e7f;color:#fff;border-color:#0b6e7f}
+.sheet{transform:translateY(105%);transition:transform .24s cubic-bezier(.2,.8,.2,1);will-change:transform}
+.sheet.open{transform:none}
+.scrim{opacity:0;transition:opacity .22s}
+.scrim.open{opacity:1}
+.noteadd{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.notes{display:flex;flex-direction:column;gap:8px}
+.note1{background:var(--soft);border-radius:12px;padding:10px 12px}
+.note1 p{margin:0 0 4px;white-space:pre-wrap;font-size:14px;line-height:1.4}
+.note1 small{color:var(--muted);font-size:12px;font-weight:600}
+.stat.due{background:var(--st-igen);color:#1d1400;font-weight:700;border:0}
+.rnum{width:22px;height:22px;border-radius:50%;background:#2d7ff9;color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.routebar{flex-wrap:wrap;background:var(--surface);padding-block:12px;bottom:0;padding-bottom:12px;box-shadow:0 -6px 20px rgba(0,0,0,.12);border-radius:16px 16px 0 0}
+.routebar .rinfo{flex:1 0 100%;font-size:14px}
+.routebar .rinfo small{display:block;color:var(--muted);font-size:12px}
+.routebar .btn{flex:1}
+.leaflet-container{-webkit-user-select:none;user-select:none}
+.leaflet-marker-icon,.leaflet-marker-pane{will-change:transform}
 #baseBtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .me-dot{width:16px;height:16px;border-radius:50%;background:#2d7ff9;border:3px solid #fff;box-shadow:0 0 0 6px rgba(45,127,249,.25)}
 
@@ -123,19 +140,23 @@ nav.tabs .count{position:absolute;top:4px;left:calc(50% + 6px);background:var(--
 @media (min-width:720px){.sheet{left:auto;right:16px;bottom:16px;width:420px;border-radius:20px;max-height:calc(100% - 32px)}}
 .grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:6px auto 12px}
 .shead{display:flex;gap:10px;align-items:flex-start}
-.shead h2{flex:1;min-width:0}
+.shead h2{flex:1;min-width:0;font-size:26px;line-height:1.1}
+.leadmeta{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:15px}
+.li .t .pill{display:inline-block}
+.toast{display:flex;gap:14px;align-items:center}
+.toastbtn{color:var(--bg);font-weight:800;text-decoration:underline;text-underline-offset:3px;font-size:14px;padding:2px 0}
 .x{width:34px;height:34px;border-radius:50%;background:var(--soft);display:grid;place-items:center;flex:none}
 h1,h2{font-family:var(--display);font-weight:800;letter-spacing:-.02em;margin:0;text-wrap:balance}
 h1{font-size:28px}
 h2{font-size:22px}
-h3{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0;font-weight:800}
+h3{font-size:15px;color:var(--ink);margin:0;font-weight:700;letter-spacing:-.01em}
 .sub{color:var(--muted);font-size:13px;margin-top:3px}
 .sec{margin-top:18px;display:flex;flex-direction:column;gap:10px}
 
 /* status bar */
 .stbar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 6px;margin-top:16px}
 .stb{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;line-height:1.15}
-.stb i{width:52px;height:52px;border-radius:50%;background:var(--c);display:grid;place-items:center;color:#fff;font-style:normal;font-size:20px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.18);transition:transform .1s}
+.stb i{width:58px;height:58px;border-radius:50%;background:var(--c);display:grid;place-items:center;color:#fff;font-style:normal;font-size:20px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.18);transition:transform .1s}
 .stb[aria-pressed="true"]{color:var(--ink)}
 .stb[aria-pressed="true"] i{outline:3px solid var(--ink);outline-offset:3px}
 .stb:active i{transform:scale(.92)}
@@ -195,7 +216,7 @@ textarea{resize:vertical}
 .pod b{font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
 .pod small{color:var(--muted);font-size:12px;font-weight:600}
 .pod.first{padding-block:18px;border-color:color-mix(in srgb,var(--st-igen) 60%,transparent);background:color-mix(in srgb,var(--st-igen) 9%,var(--surface))}
-.medal{font-size:11px;font-weight:800;color:var(--muted)}
+.medal{font-size:13px}
 .av{width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800;flex:none}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .row{display:flex;gap:12px;align-items:center}
@@ -245,6 +266,7 @@ input[type=password]{width:100%;background:var(--bg);border:1px solid var(--line
     </div>
     <div class="cross" id="cross" hidden><div class="pin" style="--c:var(--accent)"><span>+</span></div></div>
     <div class="placebar gut" id="drawbar" hidden><button class="btn ghost" id="drawCancel" data-t="cancel">Avbryt</button><button class="btn ghost" id="drawUndo" data-t="undo">Ångra</button><button class="btn" id="drawDone"><span data-t="done">Klar</span> (<span id="drawCount">0</span>)</button></div>
+    <div class="placebar gut routebar" id="routebar" hidden><div class="rinfo" id="routeInfo"></div><a class="btn" id="routeGo" target="_blank" rel="noopener" data-t="openGmaps">Öppna i Google Maps</a><button class="btn ghost" id="routeEnd" data-t="endRoute">Avsluta rutt</button></div>
     <div class="placebar gut" id="placebar" hidden><button class="btn ghost" id="placeCancel" data-t="cancel">Avbryt</button><button class="btn" id="placeOk" data-t="placeHere">Placera här</button></div>
   </section>
   <section class="view" id="v-leads" hidden><div class="page gut" id="leadsPane"></div></section>
