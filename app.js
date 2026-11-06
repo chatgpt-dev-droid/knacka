@@ -18,7 +18,7 @@ const T={sv:{
  moreTitle:"Mer",role_chef:"Chef",role_saljare:"Säljare",areas:"Områden",visited:"besökta",
  tmpl:"Meddelandemall för återbesök",tmplHelp:"{namn}, {säljare}, {adress} och {datum} fylls i automatiskt.",tmplChefOnly:"Bara chefen kan ändra mallen.",statuses:"Statusar",lang:"Språk",
  filterTitle:"Visa på kartan",onlyMine:"Bara mina leads",showAreas:"Visa områden",done:"Klar",
- tapPlace:"Flytta kartan så att nålen hamnar på huset.",longPress:"Tips: zooma in så syns husnumren – tryck på ett nummer för att lägga en nål med adressen ifylld. Du kan också hålla fingret på kartan.",
+ tapPlace:"Flytta kartan så att nålen hamnar på huset.",longPress:"Tips: zooma in så syns husnumren. Håll fingret på ett hus (eller tryck +) för att lägga en nål – adressen fylls i automatiskt.",
  tmplDefault:"Hej {namn}! Det är {säljare} från Fiskaren.nu. Jag kommer förbi på {adress} igen {datum} som vi pratade om. Passar det inte, svara bara på det här SMS:et. Hälsningar {säljare}",
  min:"min",h:"tim",d:"d",ago:"sedan",at:"kl",
  // auth
@@ -50,7 +50,7 @@ en:{
  moreTitle:"More",role_chef:"Manager",role_saljare:"Seller",areas:"Areas",visited:"visited",
  tmpl:"Revisit message template",tmplHelp:"{namn}, {säljare}, {adress} and {datum} are filled in automatically.",tmplChefOnly:"Only the manager can change the template.",statuses:"Statuses",lang:"Language",
  filterTitle:"Show on map",onlyMine:"Only my leads",showAreas:"Show areas",done:"Done",
- tapPlace:"Move the map so the pin sits on the house.",longPress:"Tip: zoom in to see house numbers – tap a number to drop a pin with the address filled in. You can also press and hold the map.",
+ tapPlace:"Move the map so the pin sits on the house.",longPress:"Tip: zoom in to see house numbers. Press and hold a house (or tap +) to drop a pin – the address fills in automatically.",
  tmplDefault:"Hi {namn}! It's {säljare} from Fiskaren.nu. I'll stop by {adress} again {datum} as we discussed. If it doesn't suit you, just reply to this text. Best, {säljare}",
  min:"min",h:"h",d:"d",ago:"ago",at:"at",
  login:"Log in",register:"Create account",yourName:"Your name",password:"Password",pwHint:"At least 6 characters",forgot:"Forgot password?",resetSent:"We sent you an email to choose a new password.",
@@ -226,7 +226,7 @@ function pinIcon(l){
 function initMap(){
   if(map)return;
   map=L.map("map",{zoomControl:false}).setView(CENTER,17);
-  BASES.map=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>'});
+  BASES.map=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:20,maxNativeZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'});
   BASES.sat=L.layerGroup([L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:20,maxNativeZoom:19,attribution:"Bild © Esri, Maxar, Earthstar Geographics"}),
     L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:'© OpenStreetMap © CARTO'})]);
   setBase(P.base||"map");
@@ -238,11 +238,13 @@ function initMap(){
   setTimeout(()=>map.invalidateSize(),50);
 }
 /* ---------- base layer + house numbers ---------- */
+const USE_OVERPASS=false; // husnummer visas i OSM-kartan; egna klickbara nummer kan slås på senare
 const BASES={};let curBase=null,addrLayer=null,addrT=null;const addrs=new Map();const fetched=[];let addrBusy=false;
 function setBase(k){if(!map)return;if(curBase)map.removeLayer(BASES[curBase]);curBase=k;BASES[k].addTo(map);P.base=k;savePrefs();
   const b=$("baseBtn");if(b){b.setAttribute("aria-pressed",k==="sat");b.title=k==="sat"?t("mapView"):t("satView")}}
 const covered=(s,w,n,e)=>fetched.some(f=>s>=f[0]&&w>=f[1]&&n<=f[2]&&e<=f[3]);
 async function loadAddresses(){
+  if(!USE_OVERPASS){if(addrLayer)addrLayer.clearLayers();return}
   if(!map||!addrLayer)return;
   if(map.getZoom()<17){addrLayer.clearLayers();return}
   const b=map.getBounds().pad(0.3);const s=b.getSouth(),w=b.getWest(),n=b.getNorth(),e=b.getEast();
