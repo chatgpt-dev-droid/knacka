@@ -16,7 +16,8 @@ service cloud.firestore {
         && request.resource.data.email == request.auth.token.email
         && ((request.resource.data.role == 'saljare' && request.resource.data.active == false)
             || (chefEmail() && request.resource.data.role == 'chef' && request.resource.data.active == true));
-      allow update: if chef();
+      allow update: if chef() || (signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['phone']));
       allow delete: if chef();
     }
     match /leads/{id} {

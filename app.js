@@ -39,6 +39,10 @@ const T={sv:{
  stEditH:"Statusar",stEditHelp:"Namn, färg, ikon och vad statusen betyder. Ändringen gäller hela teamet.",stAdd:"Lägg till status",stSave:"Spara statusar",stName:"Namn",stColor:"Färg",stIcon:"Ikon",stType:"Betyder",
  fl_sale:"Försäljning",fl_lead:"Intresserad/lead",fl_revisit:"Återbesök",fl_closed:"Knacka inte igen",fl_none:"Övrigt",stDel:"Ta bort",stNeedName:"Varje status behöver ett namn.",
  mapTitle:"Knacka",list:"Lista",searchH:"Sök",
+ fl_nothome:"Inte hemma",fl_smssent:"SMS skickat",nhChip:"inte hemma idag",nhTitle:"SMS till dagens Inte hemma",nhSub:"Alla får ett eget SMS med sitt namn. Tryck Skicka nästa, skicka i SMS-appen och kom tillbaka – statusen blir SMS skickat.",
+ nhNone:"Inga Inte hemma med telefonnummer idag.",nhNoPhone:"utan telefonnummer kan inte få SMS",nhNoConsent:"Saknar samtycke",nhNext:"Skicka nästa",nhAllDone:"Alla SMS är skickade",nhMsg:"Meddelande",nhLeft:"kvar",
+ smsOk:"Ok med SMS (samtycke)",myPhone:"Ditt mobilnummer (syns i SMS)",tmplNH:"SMS till Inte hemma",tmplNHHelp:"{namn}, {säljare}, {telefon} och {adress} fylls i automatiskt.",
+ tmplNHDefault:"Hej {namn}! Jag var förbi på {adress} idag från Fiskaren.nu men du var inte hemma. Vi kör fisk och skaldjur hem till dörren. Vill du veta mer eller beställa? Svara på det här SMS:et eller ring mig. Hälsningar {säljare}, {telefon}",
  notes:"Anteckningar",addNote:"Spara anteckning",noteAdded:"Anteckning sparad",noNotes:"Inga anteckningar än.",
  gcal:"+ Google-kalender",ical:"+ iPhone-kalender",revToday:"återbesök idag",
  planRoute:"Planera rutt",routeStops:"stopp",openGmaps:"Öppna i Google Maps",endRoute:"Avsluta rutt",routeMax:"Google Maps tar max 10 stopp åt gången – resten visas på kartan.",noStops:"Inga stopp med plats den här dagen.",
@@ -79,6 +83,10 @@ en:{
  stEditH:"Statuses",stEditHelp:"Name, colour, icon and what the status means. Changes apply to the whole team.",stAdd:"Add status",stSave:"Save statuses",stName:"Name",stColor:"Colour",stIcon:"Icon",stType:"Means",
  fl_sale:"Sale",fl_lead:"Interested/lead",fl_revisit:"Revisit",fl_closed:"Don't knock again",fl_none:"Other",stDel:"Delete",stNeedName:"Every status needs a name.",
  mapTitle:"Knacka",list:"List",searchH:"Search",
+ fl_nothome:"Not home",fl_smssent:"SMS sent",nhChip:"not home today",nhTitle:"SMS to today's Not home",nhSub:"Everyone gets their own SMS with their name. Tap Send next, send it in the SMS app and come back – the status becomes SMS sent.",
+ nhNone:"No Not home leads with a phone number today.",nhNoPhone:"without a phone number can't get an SMS",nhNoConsent:"No consent",nhNext:"Send next",nhAllDone:"All SMS sent",nhMsg:"Message",nhLeft:"left",
+ smsOk:"OK to SMS (consent)",myPhone:"Your mobile number (shown in SMS)",tmplNH:"SMS to Not home",tmplNHHelp:"{namn}, {säljare}, {telefon} and {adress} are filled in automatically.",
+ tmplNHDefault:"Hi {namn}! I stopped by {adress} today from Fiskaren.nu but you weren't home. We deliver fish and seafood to your door. Want to know more or order? Reply to this text or call me. Best, {säljare}, {telefon}",
  notes:"Notes",addNote:"Save note",noteAdded:"Note saved",noNotes:"No notes yet.",
  gcal:"+ Google Calendar",ical:"+ iPhone calendar",revToday:"revisits today",
  planRoute:"Plan route",routeStops:"stops",openGmaps:"Open in Google Maps",endRoute:"End route",routeMax:"Google Maps takes at most 10 stops at a time – the rest are shown on the map.",noStops:"No stops with a location this day.",
@@ -118,7 +126,7 @@ const ICON_PATHS={
  pin:'<path d="M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
  trash:'<path d="M5 7h14M9.5 7V4.5h5V7M7 7l1 12.5h8L17 7"/>',
  locoff:'<path d="M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11z"/><path d="M12 7.5v3.5"/><path d="M12 13.6v.1"/>'};
-const ICON_NAMES=["crown","star","bag","check","home","refresh","alert","lock","x","minus","clock","door","heart","fish","phone"];
+const ICON_NAMES=["crown","star","bag","check","home","refresh","alert","lock","x","minus","clock","door","sms","heart","fish","phone"];
 function svgI(name,size,sw){return `<svg width="${size||22}" height="${size||22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||2.2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name]||""}</svg>`}
 // flag: sale | lead | revisit | closed | none
 const DEFAULT_STATUSES=[
@@ -129,9 +137,11 @@ const DEFAULT_STATUSES=[
  {k:"p",label:"P",color:"#3fc4bc",icon:"home",flag:"none"},
  {k:"kt",label:"KT",color:"#6cc95a",icon:"refresh",flag:"revisit"},
  {k:"lead",label:"Lead",color:"#11a8a6",icon:"alert",flag:"lead"},
- {k:"kih",label:"KIH",color:"#e9a800",icon:"lock",flag:"closed"}];
+ {k:"kih",label:"KIH",color:"#e9a800",icon:"lock",flag:"closed"},
+ {k:"nh",label:"Inte hemma",color:"#8d9aa6",icon:"door",flag:"nothome"},
+ {k:"smss",label:"SMS skickat",color:"#4f7cff",icon:"sms",flag:"smssent"}];
 const LEGACY_STATUSES=[
- {k:"borta",label:"Inte hemma",color:"#8d9aa6",icon:"minus",flag:"none"},{k:"nej",label:"Nej tack",color:"#d64541",icon:"x",flag:"closed"},
+ {k:"borta",label:"Inte hemma",color:"#8d9aa6",icon:"minus",flag:"nothome"},{k:"nej",label:"Nej tack",color:"#d64541",icon:"x",flag:"closed"},
  {k:"igen",label:"Kom tillbaka",color:"#e39b14",icon:"refresh",flag:"revisit"},{k:"int",label:"Intresserad",color:"#7b5bd6",icon:"star",flag:"lead"},
  {k:"mote",label:"Möte bokat",color:"#2d7ff9",icon:"clock",flag:"lead"},{k:"kund",label:"Kund",color:"#1f9d55",icon:"check",flag:"sale"},
  {k:"aldrig",label:"Knacka ej",color:"#2b2f33",icon:"lock",flag:"closed"}];
@@ -143,6 +153,7 @@ const isSale=k=>!!k&&st(k).flag==="sale";
 const isLead=k=>!!k&&st(k).flag==="lead";
 const isRevisitSt=k=>!!k&&st(k).flag==="revisit";
 const isClosed=k=>!!k&&(st(k).flag==="closed"||st(k).flag==="sale");
+const isNotHome=k=>!!k&&st(k).flag==="nothome";
 function stDot(k,size){const s=st(k);const sz=size||34;return k==="ny"||!k?`<span class="sdot new" style="width:${sz}px;height:${sz}px"></span>`:`<span class="sdot" style="--c:${s.color};width:${sz}px;height:${sz}px">${svgI(s.icon,Math.round(sz*.52),2.6)}</span>`}
 
 const AREA_COLS=["#0b6e7f","#e39b14","#7b5bd6","#1f9d55","#d64541","#2d7ff9"];
@@ -290,7 +301,7 @@ function startData(){
     drawPins();drawAddresses();statStrip();if(tab!=="map"&&tab!=="more"&&$("sheet").hidden){const y=$("v-"+tab).scrollTop;renderTab();$("v-"+tab).scrollTop=y}
   },e=>console.error(e)));
   dataUnsubs.push(db.collection("areas").onSnapshot(q=>{S.areas=q.docs.map(d=>{const x=d.data();return {id:d.id,name:x.name,rep:x.rep,color:x.color,poly:(x.poly||[]).map(p=>[p.lat,p.lng])}});drawAreas();if(tab==="more")moreView()},e=>console.error(e)));
-  dataUnsubs.push(db.collection("settings").doc("main").onSnapshot(s=>{const d=s.data()||{};S.tmpl=d.tmpl||null;S.statuses=Array.isArray(d.statuses)&&d.statuses.length?d.statuses:null;Object.values(markers).forEach(m=>m.__k=null);drawPins();if(tab==="more")moreView()},e=>console.error(e)));
+  dataUnsubs.push(db.collection("settings").doc("main").onSnapshot(s=>{const d=s.data()||{};S.tmpl=d.tmpl||null;S.tmplNH=d.tmplNH||null;S.statuses=Array.isArray(d.statuses)&&d.statuses.length?d.statuses:null;Object.values(markers).forEach(m=>m.__k=null);drawPins();if(tab==="more")moreView()},e=>console.error(e)));
   locate(false);
 }
 window.addEventListener("online",()=>$("offline").hidden=true);
@@ -397,6 +408,9 @@ function statStrip(){
     <span class="stat"><b>${k}</b> ${t("knocks")}</span><span class="stat"><b>${ld}</b> ${t("leadsW")}</span><span class="stat"><b>${sa}</b> ${t("sales")}</span>`;
   const due=S.leads.filter(l=>l.revisit&&l.revisit<=todayStr()&&!isClosed(l.status)&&l.owner===S.uid).length;
   if(due)$("statstrip").insertAdjacentHTML("beforeend",`<button class="stat due" id="dueChip">↻ <b>${due}</b> ${t("revToday")}</button>`);
+  const nh=nhToday().length;
+  if(nh)$("statstrip").insertAdjacentHTML("beforeend",`<button class="stat nh" id="nhChip">${svgI("sms",16)} <b>${nh}</b> ${t("nhChip")}</button>`);
+  if($("nhChip"))$("nhChip").onclick=groupSms;
   if($("dueChip"))$("dueChip").onclick=()=>{calDay=todayStr();showTab("cal")};
   $("calCount").hidden=!due;$("calCount").textContent=due;
   const fc=P.filter.hide.length+(P.filter.mine?1:0);$("filterBadge").hidden=!fc;$("filterBadge").textContent=fc;
@@ -542,7 +556,8 @@ function infoTab(l){
   return `${actionRow(l)}
     <section class="dsec"><h3>${t("contact")}</h3>
       <div class="fgrid">${fld("f_company",t("company"),l.company,"text",1)}${fld("f_first",t("first"),l.first)}${fld("f_last",t("last"),l.last)}
-      ${fld("f_phone",t("phone"),l.phone,"tel",1)}${fld("f_email",t("email"),l.email,"email",1)}</div></section>
+      ${fld("f_phone",t("phone"),l.phone,"tel",1)}${fld("f_email",t("email"),l.email,"email",1)}</div>
+      <label class="check"><input type="checkbox" id="f_smsok" ${l.smsOk?"checked":""}> ${t("smsOk")}</label></section>
     <section class="dsec"><h3>${t("address")}</h3>
       <div class="fgrid">${fld("f_street",t("street"),l.street,"text",1)}${fld("f_num",t("number"),l.num)}${fld("f_apt",t("apt"),l.apt)}${fld("f_zip",t("zip"),l.zip)}${fld("f_city",t("city"),l.city)}</div>
       <div class="sub">${area?esc(area.name):t("noArea")}</div></section>
@@ -562,6 +577,7 @@ function bindInfo(root,l){
   const bt=(id,key)=>{const e=$(id);if(!e)return;e.addEventListener("input",()=>queueSave(l,key,e.value));e.addEventListener("blur",flushSave)};
   [["f_company","company"],["f_first","first"],["f_last","last"],["f_phone","phone"],["f_email","email"],["f_street","street"],["f_num","num"],["f_apt","apt"],["f_zip","zip"],["f_city","city"]].forEach(x=>bt(...x));
   bindStatusRow(root,l);
+  $("f_smsok").onchange=e=>{updLead(l,{smsOk:e.target.checked});toast(t("saved"))};
   const ow=$("f_owner");if(ow)ow.onchange=()=>{const to=ow.value;const h=Object.assign({t:Date.now(),rep:S.uid,type:"assign",to},posNow());l.hist.push(h);l.owner=to;
     db.collection("leads").doc(l.id).set({owner:to,hist:FV.arrayUnion(h),updated:Date.now()},{merge:true}).catch(err);refreshPin(l.id);toast(t("saved"))};
   const dt=(id,key,tr)=>{const e=$(id);e.addEventListener("change",()=>{flushSave();updLead(l,{[key]:tr(e.value)});statStrip();toast(t("saved"));openDetail(l.id,"info",true)})};
@@ -795,6 +811,9 @@ function moreView(){
     <div class="list">${S.areas.length?S.areas.map(a=>{const ls=S.leads.filter(l=>inPoly(l.lat,l.lng,a.poly));const v=ls.filter(l=>l.status!=="ny").length;return `<div class="li" style="cursor:default;grid-template-columns:1fr auto" id="ar_${a.id}"><span class="t"><b>${esc(a.name)}</b><small>${v}/${ls.length} ${t("visited")}</small><span class="bar" style="display:block;margin-top:6px"><i style="width:${ls.length?v/ls.length*100:0}%;background:${a.color||"var(--accent)"}"></i></span></span>
       <span class="r"><select data-a="${a.id}" aria-label="${t("assigned")}" style="width:auto;padding:6px 8px"><option value="">${t("nobody")}</option>${team().map(u=>`<option value="${u.id}" ${a.rep===u.id?"selected":""}>${esc(u.name)}</option>`).join("")}</select> <button class="btn sm ghost" data-delarea="${a.id}">${t("delArea")}</button></span></div>`}).join(""):`<div class="empty">${t("noAreas")}</div>`}</div>`:""}
     ${chef?`<h3>${t("impTitle")}</h3><div class="card"><div class="sub" style="margin:0">${t("impHelp")}</div><label class="btn ghost" for="impFile" style="cursor:pointer">${t("impPick")}</label><input type="file" id="impFile" accept=".csv,text/csv" hidden></div>`:""}
+    <div class="card"><div class="field"><label for="myPhone">${t("myPhone")}</label><input type="tel" id="myPhone" value="${esc(S.me.phone||"")}" autocomplete="tel"></div></div>
+    <h3>${t("tmplNH")}</h3>
+    <div class="card"><textarea id="tmplNH" rows="5" ${chef?"":"readonly"}>${esc(S.tmplNH||t("tmplNHDefault"))}</textarea><div class="sub" style="margin:0">${chef?t("tmplNHHelp"):t("tmplChefOnly")}</div></div>
     <h3>${t("tmpl")}</h3>
     <div class="card"><textarea id="tmpl" rows="4" ${chef?"":"readonly"}>${esc(S.tmpl||t("tmplDefault"))}</textarea><div class="sub" style="margin:0">${chef?t("tmplHelp"):t("tmplChefOnly")}</div></div>
     <h3>${t("stEditH")}</h3>
@@ -816,18 +835,62 @@ function moreView(){
     stEditor();
     $("tmpl").onchange=()=>{const v=$("tmpl").value.trim();db.collection("settings").doc("main").set({tmpl:v&&v!==t("tmplDefault")?v:null},{merge:true}).then(()=>toast(t("saved"))).catch(err)};
   }
+  $("myPhone").onchange=()=>{const v=$("myPhone").value.trim();S.me.phone=v;db.collection("users").doc(S.uid).set({phone:v},{merge:true}).then(()=>toast(t("saved"))).catch(err)};
+  if(chef)$("tmplNH").onchange=()=>{const v=$("tmplNH").value.trim();db.collection("settings").doc("main").set({tmplNH:v&&v!==t("tmplNHDefault")?v:null},{merge:true}).then(()=>toast(t("saved"))).catch(err)};
   $("lsv").onclick=()=>{P.lang="sv";savePrefs();applyLang();moreView()};
   $("len").onclick=()=>{P.lang="en";savePrefs();applyLang();moreView()};
 }
 
 
 
+
+/* ================= group SMS: today's Not home ================= */
+function nhToday(){
+  const st0=new Date();st0.setHours(0,0,0,0);const s0=st0.getTime();
+  return S.leads.filter(l=>isNotHome(l.status)&&l.hist.some(h=>h.s===l.status&&h.t>=s0&&(h.rep===S.uid)));
+}
+function fillNH(l){
+  const name=(l.first||"").trim();
+  let txt=(S.tmplNH||t("tmplNHDefault")).replace(/\{namn\}/g,name).replace(/\{säljare\}/g,S.me?S.me.name:"").replace(/\{telefon\}/g,(S.me&&S.me.phone)||"").replace(/\{adress\}/g,addr(l));
+  return txt.replace(/Hej !/,"Hej!").replace(/Hi !/,"Hi!").replace(/,\s*$/,"").replace(/, $/,"");
+}
+function smsSentStatus(){return (stList().find(x=>x.flag==="smssent")||{}).k}
+async function ensureSmsStatus(){
+  if(smsSentStatus())return smsSentStatus();
+  const add={k:"smss",label:"SMS skickat",color:"#4f7cff",icon:"sms",flag:"smssent"};
+  const list=stList().concat(add);S.statuses=list;
+  if(isChef())db.collection("settings").doc("main").set({statuses:list},{merge:true}).catch(err);
+  return add.k;
+}
+let nhSel=null;
+function groupSms(){
+  const all=nhToday();const withPhone=all.filter(l=>l.phone);const noPhone=all.length-withPhone.length;
+  if(!nhSel)nhSel=new Set(withPhone.filter(l=>l.smsOk).map(l=>l.id));
+  const queue=withPhone.filter(l=>nhSel.has(l.id));
+  const next=queue[0];
+  openSheet(`<div class="shead"><h2>${t("nhTitle")}</h2><button class="x" id="sx">${icon.x}</button></div>
+    <p class="sub">${t("nhSub")}</p>
+    ${withPhone.length?`<div class="list" style="margin-top:12px">${withPhone.map(l=>`<label class="li nhrow"><input type="checkbox" data-nh="${l.id}" ${nhSel.has(l.id)?"checked":""}>
+      <span class="t"><b>${esc(nameOf(l)||addr(l))}</b><small>${esc(l.phone)}${nameOf(l)?", "+esc(addr(l)):""}</small>${l.smsOk?"":`<span class="pill" style="--c:var(--st-igen);margin-top:4px">${t("nhNoConsent")}</span>`}</span>
+      <a class="btn sm ghost" data-one="${l.id}" href="${smsHref(l.phone,fillNH(l))}">${t("send")}</a></label>`).join("")}</div>`:`<div class="empty">${t("nhNone")}</div>`}
+    ${noPhone?`<p class="sub">${noPhone} ${t("nhNoPhone")}.</p>`:""}
+    ${next?`<div class="sec"><h3>${t("nhMsg")}</h3><div class="bubble"><p>${esc(fillNH(next))}</p></div>
+      <a class="btn" id="nhNext" href="${smsHref(next.phone,fillNH(next))}">${t("nhNext")}: ${esc(nameOf(next)||addr(next))} (${queue.length} ${t("nhLeft")})</a></div>`:(withPhone.length?`<div class="sec"><div class="note">${t("nhAllDone")}</div></div>`:"")}`,"nh");
+  $("sx").onclick=()=>{nhSel=null;closeSheet()};
+  $("sheet").querySelectorAll("[data-nh]").forEach(c=>c.onchange=()=>{c.checked?nhSel.add(c.dataset.nh):nhSel.delete(c.dataset.nh);groupSms()});
+  const mark=async id=>{const l=curLead(id);if(!l)return;const k=await ensureSmsStatus();
+    const h=Object.assign({t:Date.now(),rep:S.uid,s:k},posNow());l.hist.push(h);l.status=k;l.smsSent=todayStr();
+    db.collection("leads").doc(l.id).set({status:k,smsSent:todayStr(),hist:FV.arrayUnion(h),updated:Date.now()},{merge:true}).catch(err);
+    nhSel.delete(id);refreshPin(id);statStrip();setTimeout(groupSms,500)};
+  $("sheet").querySelectorAll("[data-one]").forEach(a=>a.addEventListener("click",()=>mark(a.dataset.one)));
+  if($("nhNext"))$("nhNext").addEventListener("click",()=>mark(next.id));
+}
 /* ================= status editor (chef) ================= */
 let stDraft=null;
 function stEditor(){
   if(!$("stRows"))return;
   if(!stDraft)stDraft=JSON.parse(JSON.stringify(stList()));
-  const flags=["sale","lead","revisit","closed","none"];
+  const flags=["sale","lead","revisit","nothome","smssent","closed","none"];
   $("stRows").innerHTML=stDraft.map((x,i)=>`<div class="strow-ed">
     <span class="sdot" style="--c:${x.color};width:40px;height:40px">${svgI(x.icon,20,2.6)}</span>
     <div class="ed">
