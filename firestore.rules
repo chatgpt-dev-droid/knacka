@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function profile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function active() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && profile().active == true; }
+    function chef() { return active() && profile().role == 'chef'; }
+    function chefEmail() {
+      return request.auth.token.email in ['hej@fiskaren.nu', 'karen@fiskaren.nu']
+        && request.auth.token.email_verified == true;
+    }
+
+    match /users/{uid} {
+      allow read: if active() || (signedIn() && request.auth.uid == uid);
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && ((request.resource.data.role == 'saljare' && request.resource.data.active == false)
+            || (chefEmail() && request.resource.data.role == 'chef' && request.resource.data.active == true));
+      allow update: if chef();
+      allow delete: if chef();
+    }
+    match /leads/{id} {
+      allow read, create, update: if active();
+      allow delete: if chef() || (active() && resource.data.owner == request.auth.uid);
+    }
+    match /areas/{id} {
+      allow read: if active();
+      allow write: if chef();
+    }
+    match /settings/{id} {
+      allow read: if active();
+      allow write: if chef();
+    }
+  }
+}
