@@ -39,7 +39,10 @@ const T={sv:{
  stEditH:"Statusar",stEditHelp:"Namn, färg, ikon och vad statusen betyder. Ändringen gäller hela teamet.",stAdd:"Lägg till status",stSave:"Spara statusar",stName:"Namn",stColor:"Färg",stIcon:"Ikon",stType:"Betyder",
  fl_sale:"Försäljning",fl_lead:"Intresserad/lead",fl_revisit:"Återbesök",fl_closed:"Knacka inte igen",fl_none:"Övrigt",stDel:"Ta bort",stNeedName:"Varje status behöver ett namn.",
  mapTitle:"Knacka",list:"Lista",searchH:"Sök",
- fl_nothome:"Inte hemma",fl_smssent:"SMS skickat",nhChip:"inte hemma idag",nhTitle:"SMS till dagens Inte hemma",nhSub:"Alla får ett eget SMS med sitt namn. Tryck Skicka nästa, skicka i SMS-appen och kom tillbaka – statusen blir SMS skickat.",
+ fl_nothome:"Inte hemma",fl_smssent:"SMS skickat",
+ elksAll:"Skicka till alla automatiskt",elksConfirm:"Skicka {n} SMS nu via 46elks?",elksYes:"Ja, skicka",elksBusy:"Skickar…",elksDone:"Skickade {ok} av {n}",elksFail:"Kunde inte skicka",
+ replied:"svar",repliedTitle:"Kunder som svarat",custReplied:"Kunden har svarat på SMS",smsH:"SMS-inställningar",elksFromL:"Avsändarnummer hos 46elks (t.ex. +46766861234)",aiOnL:"AI svarar automatiskt på SMS",aiInfoL:"Det här vet AI:n (produkter, priser, villkor)",aiInfoHelp:"AI:n svarar bara utifrån den här texten. Håll den uppdaterad.",optedOut:"Avregistrerad från SMS",
+ evSmsIn:"SMS från kunden",evSmsOut:"SMS skickat",customer:"Kund",nhChip:"inte hemma idag",nhTitle:"SMS till dagens Inte hemma",nhSub:"Alla får ett eget SMS med sitt namn. Tryck Skicka nästa, skicka i SMS-appen och kom tillbaka – statusen blir SMS skickat.",
  nhNone:"Inga Inte hemma med telefonnummer idag.",nhNoPhone:"utan telefonnummer kan inte få SMS",nhNoConsent:"Saknar samtycke",nhNext:"Skicka nästa",nhAllDone:"Alla SMS är skickade",nhMsg:"Meddelande",nhLeft:"kvar",
  smsOk:"Ok med SMS (samtycke)",myPhone:"Ditt mobilnummer (syns i SMS)",tmplNH:"SMS till Inte hemma",tmplNHHelp:"{namn}, {säljare}, {telefon} och {adress} fylls i automatiskt.",
  tmplNHDefault:"Hej {namn}! Jag var förbi på {adress} idag från Fiskaren.nu men du var inte hemma. Vi kör fisk och skaldjur hem till dörren. Vill du veta mer eller beställa? Svara på det här SMS:et eller ring mig. Hälsningar {säljare}, {telefon}",
@@ -83,7 +86,10 @@ en:{
  stEditH:"Statuses",stEditHelp:"Name, colour, icon and what the status means. Changes apply to the whole team.",stAdd:"Add status",stSave:"Save statuses",stName:"Name",stColor:"Colour",stIcon:"Icon",stType:"Means",
  fl_sale:"Sale",fl_lead:"Interested/lead",fl_revisit:"Revisit",fl_closed:"Don't knock again",fl_none:"Other",stDel:"Delete",stNeedName:"Every status needs a name.",
  mapTitle:"Knacka",list:"List",searchH:"Search",
- fl_nothome:"Not home",fl_smssent:"SMS sent",nhChip:"not home today",nhTitle:"SMS to today's Not home",nhSub:"Everyone gets their own SMS with their name. Tap Send next, send it in the SMS app and come back – the status becomes SMS sent.",
+ fl_nothome:"Not home",fl_smssent:"SMS sent",
+ elksAll:"Send to all automatically",elksConfirm:"Send {n} SMS now via 46elks?",elksYes:"Yes, send",elksBusy:"Sending…",elksDone:"Sent {ok} of {n}",elksFail:"Couldn't send",
+ replied:"replies",repliedTitle:"Customers who replied",custReplied:"The customer replied by SMS",smsH:"SMS settings",elksFromL:"Sender number at 46elks (e.g. +46766861234)",aiOnL:"AI replies to SMS automatically",aiInfoL:"What the AI knows (products, prices, terms)",aiInfoHelp:"The AI only answers from this text. Keep it up to date.",optedOut:"Unsubscribed from SMS",
+ evSmsIn:"SMS from customer",evSmsOut:"SMS sent",customer:"Customer",nhChip:"not home today",nhTitle:"SMS to today's Not home",nhSub:"Everyone gets their own SMS with their name. Tap Send next, send it in the SMS app and come back – the status becomes SMS sent.",
  nhNone:"No Not home leads with a phone number today.",nhNoPhone:"without a phone number can't get an SMS",nhNoConsent:"No consent",nhNext:"Send next",nhAllDone:"All SMS sent",nhMsg:"Message",nhLeft:"left",
  smsOk:"OK to SMS (consent)",myPhone:"Your mobile number (shown in SMS)",tmplNH:"SMS to Not home",tmplNHHelp:"{namn}, {säljare}, {telefon} and {adress} are filled in automatically.",
  tmplNHDefault:"Hi {namn}! I stopped by {adress} today from Fiskaren.nu but you weren't home. We deliver fish and seafood to your door. Want to know more or order? Reply to this text or call me. Best, {säljare}, {telefon}",
@@ -92,6 +98,7 @@ en:{
  planRoute:"Plan route",routeStops:"stops",openGmaps:"Open in Google Maps",endRoute:"End route",routeMax:"Google Maps takes at most 10 stops at a time – the rest are shown on the map.",noStops:"No stops with a location this day.",
  impTitle:"Import from SalesRabbit",impHelp:"Export your leads from SalesRabbit as a CSV file (Leads → select all → Export) and choose the file here. Duplicates are skipped.",impPick:"Choose CSV file",impFound:"rows in the file",impNew:"new leads",impDup:"already exist",impNoPos:"have no coordinates – the address is looked up (about 1 s each)",impGo:"Import",impBusy:"Importing…",impGeo:"Looking up addresses",impDone:"Done! Imported",impFail:"could not be placed on the map",impCols:"Columns found",impBad:"Couldn't read the file. Is it a CSV file from SalesRabbit?"}};
 
+const AI_INFO_DEFAULT='Fiskaren.nu levererar fisk och skaldjur hem till dörren i Stockholm med omnejd. Beställ på fiskaren.nu. Telefon 076-230 09 97.\nPrenumeration: leverans var 4:e eller var 8:e vecka. Man kan också köpa en gång.\nFri frakt från 1 600 kr. Extra 5 % rabatt från 3 600 kr. Större förpackningar är billigare per kilo.\nExempel på priser (minsta förpackning):\n- Torskrygg MSC 1 kg 695 kr\n- Torskfilé 1 kg 299 kr\n- Lax sashimi 1 kg 789 kr\n- Landodlad lax 1 kg 589 kr\n- Sej rygg 1 kg 299 kr\n- Koljafilé 1 kg 420 kr\n- Gösfilé 1 kg 479 kr\n- Rödspätta 1 kg 529 kr\n- Hälleflundra 1 kg 869 kr\n- Räkor 40/60 1 kg 499 kr\n- Scampi Black Tiger 6/8 1 kg 799 kr\n- Kammusslor 10/20 1 kg 849 kr\n- Panerad torsk 1 kg 289 kr\n- Laxburgare sashimi 1 kg 339 kr\n- Regnbågsrom 200 g 389 kr\n- Kalix löjrom 250 g 1 299 kr\nHela sortimentet och aktuella priser finns på fiskaren.nu.';
 const CHEF_EMAILS=["hej@fiskaren.nu","karen@fiskaren.nu"];
 /* ---------- status system (editable by chef) ---------- */
 const ICON_PATHS={
@@ -173,7 +180,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const isChef=()=>S.me&&S.me.role==="chef";
 const team=()=>S.users.filter(u=>u.active);
-const rep=id=>S.users.find(u=>u.id===id)||{name:"—"};
+const rep=id=>id==="ai"?{name:"AI"}:(S.users.find(u=>u.id===id)||{name:"—"});
 const loc=()=>P.lang==="sv"?"sv-SE":"en-GB";
 function dstr(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 const todayStr=()=>dstr(new Date());
@@ -301,7 +308,7 @@ function startData(){
     drawPins();drawAddresses();statStrip();if(tab!=="map"&&tab!=="more"&&$("sheet").hidden){const y=$("v-"+tab).scrollTop;renderTab();$("v-"+tab).scrollTop=y}
   },e=>console.error(e)));
   dataUnsubs.push(db.collection("areas").onSnapshot(q=>{S.areas=q.docs.map(d=>{const x=d.data();return {id:d.id,name:x.name,rep:x.rep,color:x.color,poly:(x.poly||[]).map(p=>[p.lat,p.lng])}});drawAreas();if(tab==="more")moreView()},e=>console.error(e)));
-  dataUnsubs.push(db.collection("settings").doc("main").onSnapshot(s=>{const d=s.data()||{};S.tmpl=d.tmpl||null;S.tmplNH=d.tmplNH||null;S.statuses=Array.isArray(d.statuses)&&d.statuses.length?d.statuses:null;Object.values(markers).forEach(m=>m.__k=null);drawPins();if(tab==="more")moreView()},e=>console.error(e)));
+  dataUnsubs.push(db.collection("settings").doc("main").onSnapshot(s=>{const d=s.data()||{};S.tmpl=d.tmpl||null;S.tmplNH=d.tmplNH||null;S.elksFrom=d.elksFrom||"";S.aiSmsOn=d.aiSmsOn!==false;S.aiInfo=d.aiInfo||null;S.statuses=Array.isArray(d.statuses)&&d.statuses.length?d.statuses:null;Object.values(markers).forEach(m=>m.__k=null);drawPins();if(tab==="more")moreView()},e=>console.error(e)));
   locate(false);
 }
 window.addEventListener("online",()=>$("offline").hidden=true);
@@ -411,6 +418,9 @@ function statStrip(){
   const nh=nhToday().length;
   if(nh)$("statstrip").insertAdjacentHTML("beforeend",`<button class="stat nh" id="nhChip">${svgI("sms",16)} <b>${nh}</b> ${t("nhChip")}</button>`);
   if($("nhChip"))$("nhChip").onclick=groupSms;
+  const rp=S.leads.filter(l=>l.needsAttention&&(isChef()||l.owner===S.uid)).length;
+  if(rp)$("statstrip").insertAdjacentHTML("afterbegin",`<button class="stat rp" id="rpChip">${svgI("sms",16)} <b>${rp}</b> ${t("replied")}</button>`);
+  if($("rpChip"))$("rpChip").onclick=repliesSheet;
   if($("dueChip"))$("dueChip").onclick=()=>{calDay=todayStr();showTab("cal")};
   $("calCount").hidden=!due;$("calCount").textContent=due;
   const fc=P.filter.hide.length+(P.filter.mine?1:0);$("filterBadge").hidden=!fc;$("filterBadge").textContent=fc;
@@ -509,6 +519,7 @@ function openLead(id){
       <div class="ph-t"><b>${esc(nm||addr(l))}</b><span>${l.status==="ny"?t("st_ny"):esc(s.label)}${lastVisit(l)?`, ${rel(lastVisit(l))}`:""}</span></div>
       <button class="btn sm ghost" id="toDetail">${t("details")}</button></div>
     ${nm?`<div class="peekaddr">${esc(fullAddr(l))}</div>`:([l.zip,l.city].filter(Boolean).length?`<div class="peekaddr sub">${esc([l.zip,l.city].filter(Boolean).join(" "))}</div>`:"")}
+    ${l.needsAttention||l.smsUnread?`<button class="replied" id="toReplies">${svgI("sms",18)} ${t("custReplied")}</button>`:""}
     ${statusRow(l)}
     ${dateChips(l)}
     <div class="sec"><h3>${t("notes")}</h3>
@@ -520,6 +531,7 @@ function openLead(id){
   const sh=$("sheet");
   bindStatusRow(sh,l);bindDateChips(sh,l);
   $("toDetail").onclick=()=>openDetail(l.id,"info");
+  if($("toReplies"))$("toReplies").onclick=()=>openDetail(l.id,"notes");
   const qn=$("qn");qn.addEventListener("input",()=>{noteDraft[l.id]=qn.value});
   $("qnForm").onsubmit=e=>{e.preventDefault();const v=qn.value.trim();if(!v)return qn.focus();addNoteTo(l,v);openLead(l.id)};
 }
@@ -529,7 +541,7 @@ function closeDetail(){const d=$("detail");flushSave();d.classList.remove("open"
   if(openMode==="detail"){openMode=null;openId=null;if(selId){const x=selId;selId=null;refreshPin(x)}}if(tab!=="map"&&tab!=="more")renderTab()}
 function openDetail(id,tabName,keepScroll){
   const l=curLead(id);if(!l)return;
-  if(openMode==="peek"){const sh=$("sheet"),sc=$("scrim");sh.classList.remove("open");sc.classList.remove("open");sheetKey=null;setTimeout(()=>{sh.hidden=true;sc.hidden=true},230)}
+  if(!$("sheet").hidden){const sh=$("sheet"),sc=$("scrim");sh.classList.remove("open");sc.classList.remove("open");sheetKey=null;setTimeout(()=>{sh.hidden=true;sc.hidden=true},230)}
   openId=id;openMode="detail";detailTab=tabName||"info";selId=id;
   const d=$("detail");const body=d.querySelector(".dbody");const y=keepScroll&&body?body.scrollTop:0;
   const s=st(l.status);const nm=nameOf(l);
@@ -588,9 +600,14 @@ function bindInfo(root,l){
     $("delNo").onclick=()=>openDetail(l.id,"info",true);$("delYes").onclick=()=>{S.leads=S.leads.filter(x=>x.id!==l.id);db.collection("leads").doc(l.id).delete().catch(err);selId=null;closeDetail();drawPins();statStrip()}};
 }
 function notesTab(l){
-  const n=allNotes(l);
+  const n=allNotes(l).map(x=>Object.assign({kind:"note"},x)).concat((l.sms||[]).map(x=>Object.assign({kind:"sms"},x)));
+  n.sort((a,b)=>(a.t||0)-(b.t||0));
+  if(l.needsAttention||l.smsUnread){db.collection("leads").doc(l.id).set({needsAttention:false,smsUnread:false},{merge:true}).catch(()=>{});l.needsAttention=false;l.smsUnread=false;setTimeout(statStrip,50)}
   if(!n.length)return `<div class="empty">${t("noNotes")}</div>`;
-  return `<div class="chat">${n.map(x=>`<div class="msg"><span class="av sm">${esc(initials(rep(x.rep).name))}</span><div><div class="mhead"><b>${esc(rep(x.rep).name)}</b>${x.legacy?"":`<small>${fdt(x.t)}</small>`}</div><div class="bubble"><p>${esc(x.text)}</p></div></div></div>`).join("")}</div>`;
+  return `${l.smsOptOut?`<div class="note" style="margin-top:12px">${t("optedOut")}</div>`:""}<div class="chat">${n.map(x=>{
+    if(x.kind==="sms"&&x.dir==="in")return `<div class="msg"><span class="av sm cust">${esc(initials(nameOf(l)||"?"))}</span><div><div class="mhead"><b>${esc(nameOf(l)||l.phone||t("customer"))}</b><small>SMS, ${fdt(x.t)}</small></div><div class="bubble cust"><p>${esc(x.text)}</p></div></div></div>`;
+    if(x.kind==="sms")return `<div class="msg"><span class="av sm">${esc(initials(rep(x.by).name))}</span><div><div class="mhead"><b>${esc(rep(x.by).name)}</b><small>SMS, ${fdt(x.t)}</small></div><div class="bubble sms"><p>${esc(x.text)}</p></div></div></div>`;
+    return `<div class="msg"><span class="av sm">${esc(initials(rep(x.rep).name))}</span><div><div class="mhead"><b>${esc(rep(x.rep).name)}</b>${x.legacy?"":`<small>${fdt(x.t)}</small>`}</div><div class="bubble"><p>${esc(x.text)}</p></div></div></div>`}).join("")}</div>`;
 }
 function distBadge(e,l){
   if(e.lat==null)return `<span class="dist none">${t("noLocation")} ${svgI("locoff",18)}</span>`;
@@ -604,6 +621,7 @@ function actTab(l){
     else if(h.type==="create")ev.push({t:h.t,ic:`<span class="sdot new" style="width:36px;height:36px"></span>`,title:t("evCreate"),by:h.rep,e:h});
     else ev.push({t:h.t,ic:stDot(h.s,36),title:t("evStatus")+" "+stLabel(h.s),by:h.rep,e:h});
   });
+  (l.sms||[]).forEach(m=>ev.push({t:m.t,ic:`<span class="sdot" style="--c:${m.dir==="in"?"var(--accent)":"#4f7cff"};width:36px;height:36px">${svgI("sms",18)}</span>`,title:m.dir==="in"?t("evSmsIn"):t("evSmsOut"),by:m.dir==="in"?null:m.by,detail:m.text,e:{}}));
   (l.notes||[]).forEach(n=>ev.push({t:n.t,ic:`<span class="sdot" style="--c:var(--soft);color:var(--ink);width:36px;height:36px">${svgI("note",18)}</span>`,title:t("evNote"),by:n.rep,detail:n.text,e:n}));
   if(!l.hist.some(h=>h.type==="create")&&l.created)ev.push({t:l.created,ic:`<span class="sdot new" style="width:36px;height:36px"></span>`,title:t("evCreate"),by:l.owner,e:{}});
   ev.sort((a,b)=>b.t-a.t);
@@ -611,7 +629,7 @@ function actTab(l){
   let out="",day="";
   ev.forEach(x=>{const d=new Date(x.t).toLocaleDateString(loc(),{weekday:"short",day:"numeric",month:"short",year:new Date(x.t).getFullYear()!==new Date().getFullYear()?"numeric":undefined});
     if(d!==day){out+=`<div class="dayhead">${d}</div>`;day=d}
-    out+=`<div class="ev">${x.ic}<div class="evt"><b>${esc(x.title)}</b><small>${t("by")} ${esc(rep(x.by).name)} ${t("at")} ${ftime(x.t)}</small>${x.detail?`<p>${esc(x.detail)}</p>`:""}</div>${distBadge(x.e,l)}</div>`});
+    out+=`<div class="ev">${x.ic}<div class="evt"><b>${esc(x.title)}</b><small>${x.by?t("by")+" "+esc(rep(x.by).name)+" ":""}${t("at")} ${ftime(x.t)}</small>${x.detail?`<p>${esc(x.detail)}</p>`:""}</div>${distBadge(x.e,l)}</div>`});
   return `<div class="activity">${out}</div>`;
 }
 
@@ -812,6 +830,10 @@ function moreView(){
       <span class="r"><select data-a="${a.id}" aria-label="${t("assigned")}" style="width:auto;padding:6px 8px"><option value="">${t("nobody")}</option>${team().map(u=>`<option value="${u.id}" ${a.rep===u.id?"selected":""}>${esc(u.name)}</option>`).join("")}</select> <button class="btn sm ghost" data-delarea="${a.id}">${t("delArea")}</button></span></div>`}).join(""):`<div class="empty">${t("noAreas")}</div>`}</div>`:""}
     ${chef?`<h3>${t("impTitle")}</h3><div class="card"><div class="sub" style="margin:0">${t("impHelp")}</div><label class="btn ghost" for="impFile" style="cursor:pointer">${t("impPick")}</label><input type="file" id="impFile" accept=".csv,text/csv" hidden></div>`:""}
     <div class="card"><div class="field"><label for="myPhone">${t("myPhone")}</label><input type="tel" id="myPhone" value="${esc(S.me.phone||"")}" autocomplete="tel"></div></div>
+    ${chef?`<h3>${t("smsH")}</h3><div class="card">
+      <div class="field"><label for="elksFrom">${t("elksFromL")}</label><input type="tel" id="elksFrom" value="${esc(S.elksFrom||"")}" autocomplete="off"></div>
+      <label class="check"><input type="checkbox" id="aiOn" ${S.aiSmsOn?"checked":""}> ${t("aiOnL")}</label>
+      <div class="field"><label for="aiInfo">${t("aiInfoL")}</label><textarea id="aiInfo" rows="10">${esc(S.aiInfo||AI_INFO_DEFAULT)}</textarea><div class="sub" style="margin:0">${t("aiInfoHelp")}</div></div></div>`:""}
     <h3>${t("tmplNH")}</h3>
     <div class="card"><textarea id="tmplNH" rows="5" ${chef?"":"readonly"}>${esc(S.tmplNH||t("tmplNHDefault"))}</textarea><div class="sub" style="margin:0">${chef?t("tmplNHHelp"):t("tmplChefOnly")}</div></div>
     <h3>${t("tmpl")}</h3>
@@ -836,6 +858,10 @@ function moreView(){
     $("tmpl").onchange=()=>{const v=$("tmpl").value.trim();db.collection("settings").doc("main").set({tmpl:v&&v!==t("tmplDefault")?v:null},{merge:true}).then(()=>toast(t("saved"))).catch(err)};
   }
   $("myPhone").onchange=()=>{const v=$("myPhone").value.trim();S.me.phone=v;db.collection("users").doc(S.uid).set({phone:v},{merge:true}).then(()=>toast(t("saved"))).catch(err)};
+  if(chef){const sv=(o)=>db.collection("settings").doc("main").set(o,{merge:true}).then(()=>toast(t("saved"))).catch(err);
+    $("elksFrom").onchange=()=>sv({elksFrom:$("elksFrom").value.replace(/[^\d+]/g,"")});
+    $("aiOn").onchange=()=>sv({aiSmsOn:$("aiOn").checked});
+    $("aiInfo").onchange=()=>sv({aiInfo:$("aiInfo").value.trim()});}
   if(chef)$("tmplNH").onchange=()=>{const v=$("tmplNH").value.trim();db.collection("settings").doc("main").set({tmplNH:v&&v!==t("tmplNHDefault")?v:null},{merge:true}).then(()=>toast(t("saved"))).catch(err)};
   $("lsv").onclick=()=>{P.lang="sv";savePrefs();applyLang();moreView()};
   $("len").onclick=()=>{P.lang="en";savePrefs();applyLang();moreView()};
@@ -875,7 +901,8 @@ function groupSms(){
       <a class="btn sm ghost" data-one="${l.id}" href="${smsHref(l.phone,fillNH(l))}">${t("send")}</a></label>`).join("")}</div>`:`<div class="empty">${t("nhNone")}</div>`}
     ${noPhone?`<p class="sub">${noPhone} ${t("nhNoPhone")}.</p>`:""}
     ${next?`<div class="sec"><h3>${t("nhMsg")}</h3><div class="bubble"><p>${esc(fillNH(next))}</p></div>
-      <a class="btn" id="nhNext" href="${smsHref(next.phone,fillNH(next))}">${t("nhNext")}: ${esc(nameOf(next)||addr(next))} (${queue.length} ${t("nhLeft")})</a></div>`:(withPhone.length?`<div class="sec"><div class="note">${t("nhAllDone")}</div></div>`:"")}`,"nh");
+      ${S.elksFrom?`<div id="elksWrap"><button class="btn" id="elksAll">${t("elksAll")} (${queue.length})</button></div>`:""}
+      <a class="btn ${S.elksFrom?"ghost":""}" id="nhNext" href="${smsHref(next.phone,fillNH(next))}">${t("nhNext")}: ${esc(nameOf(next)||addr(next))} (${queue.length} ${t("nhLeft")})</a></div>`:(withPhone.length?`<div class="sec"><div class="note">${t("nhAllDone")}</div></div>`:"")}`,"nh");
   $("sx").onclick=()=>{nhSel=null;closeSheet()};
   $("sheet").querySelectorAll("[data-nh]").forEach(c=>c.onchange=()=>{c.checked?nhSel.add(c.dataset.nh):nhSel.delete(c.dataset.nh);groupSms()});
   const mark=async id=>{const l=curLead(id);if(!l)return;const k=await ensureSmsStatus();
@@ -884,6 +911,21 @@ function groupSms(){
     nhSel.delete(id);refreshPin(id);statStrip();setTimeout(groupSms,500)};
   $("sheet").querySelectorAll("[data-one]").forEach(a=>a.addEventListener("click",()=>mark(a.dataset.one)));
   if($("nhNext"))$("nhNext").addEventListener("click",()=>mark(next.id));
+  if($("elksAll"))$("elksAll").onclick=()=>{const w=$("elksWrap");w.innerHTML=`<p class="plain"><b>${t("elksConfirm").replace("{n}",queue.length)}</b></p><div class="confirm"><button class="btn ghost" id="eNo">${t("cancel")}</button><button class="btn" id="eYes">${t("elksYes")}</button></div>`;
+    $("eNo").onclick=groupSms;$("eYes").onclick=async()=>{$("eYes").disabled=true;$("eYes").textContent=t("elksBusy");await ensureSmsStatus();
+      try{const fn=firebase.app().functions("europe-north1").httpsCallable("sendSms");
+        const r=await fn({items:queue.map(l=>({id:l.id,text:fillNH(l)}))});const res=(r.data&&r.data.results)||[];const ok=res.filter(x=>x.ok).length;
+        res.filter(x=>x.ok).forEach(x=>nhSel.delete(x.id));toast(t("elksDone").replace("{ok}",ok).replace("{n}",queue.length));groupSms()}
+      catch(e){console.error(e);toast(t("elksFail")+": "+(e.message||""));groupSms()}}};
+}
+
+/* ================= SMS replies ================= */
+function repliesSheet(){
+  const list=S.leads.filter(l=>l.needsAttention&&(isChef()||l.owner===S.uid)).sort((a,b)=>(b.updated||0)-(a.updated||0));
+  openSheet(`<div class="shead"><h2>${t("repliedTitle")}</h2><button class="x" id="sx">${icon.x}</button></div>
+    <div class="list" style="margin-top:12px">${list.map(l=>{const last=(l.sms||[]).filter(x=>x.dir==="in").slice(-1)[0];return `<button class="li" data-rp="${l.id}">${stDot(l.status,36)}<span class="t"><b>${esc(nameOf(l)||addr(l))}</b><small>${esc(last?last.text:"")}</small></span><span class="r">${last?fdt(last.t):""}</span></button>`}).join("")}</div>`,"replies");
+  $("sx").onclick=closeSheet;
+  $("sheet").querySelectorAll("[data-rp]").forEach(b=>b.onclick=()=>openDetail(b.dataset.rp,"notes"));
 }
 /* ================= status editor (chef) ================= */
 let stDraft=null;

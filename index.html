@@ -94,6 +94,11 @@ main{flex:1;min-height:0;position:relative}
 .note1{background:var(--soft);border-radius:12px;padding:10px 12px}
 .note1 p{margin:0 0 4px;white-space:pre-wrap;font-size:14px;line-height:1.4}
 .note1 small{color:var(--muted);font-size:12px;font-weight:600}
+.stat.rp{background:var(--st-nej);color:#fff;border:0;font-weight:700}
+.replied{display:flex;gap:8px;align-items:center;width:100%;margin-top:12px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--ink);font-weight:700;font-size:15px;min-height:44px}
+.bubble.cust{background:color-mix(in srgb,var(--accent) 14%,var(--surface))}
+.bubble.sms{background:color-mix(in srgb,#4f7cff 14%,var(--surface))}
+.av.cust{background:var(--muted)}
 .stat.nh{background:#4f7cff;color:#fff;border:0;font-weight:700}
 .nhrow{grid-template-columns:auto 1fr auto;cursor:pointer}
 .nhrow input{width:22px;height:22px;accent-color:var(--accent)}
@@ -395,6 +400,7 @@ input[type=password]{width:100%;background:var(--bg);border:1px solid var(--line
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
 </body>
