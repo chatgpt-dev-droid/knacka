@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Knacka",
+    "slug": "knacka",
+    "scheme": "knacka",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "nu.fiskaren.knacka",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "nu.fiskaren.knacka",
+      "adaptiveIcon": {
+        "backgroundColor": "#0b6e7f",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Knacka använder din position för att visa var du är på kartan och, när du har startat arbetsdagen, spara din rutt så att teamet ser vilka gator som är besökta.",
+          "locationWhenInUsePermission": "Knacka använder din position för att visa var du är på kartan och fylla i adressen när du sätter en nål.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#0b6e7f"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

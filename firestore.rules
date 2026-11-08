@@ -28,6 +28,17 @@ service cloud.firestore {
       allow read: if active();
       allow write: if chef();
     }
+    // live position during the workday ("Starta dagen") – the chef sees everyone, a seller only themself
+    match /live/{uid} {
+      allow read: if chef() || (active() && request.auth.uid == uid);
+      allow write: if active() && request.auth.uid == uid;
+    }
+    // one route per seller and day: {uid}_{YYYY-MM-DD}
+    match /tracks/{id} {
+      allow read: if chef() || (active() && resource.data.uid == request.auth.uid);
+      allow create, update: if active() && id.matches(request.auth.uid + '_.*') && request.resource.data.uid == request.auth.uid;
+      allow delete: if chef();
+    }
     match /settings/{id} {
       allow read: if active();
       allow write: if chef();
