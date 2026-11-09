@@ -1,0 +1,36 @@
+name: Knacka app (Expo)
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: "Also build installable app: none | android | ios | all"
+        default: none
+  push:
+    branches: [main]
+    paths: ['mobile/**']
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: mobile } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: mobile/package-lock.json }
+      - uses: expo/expo-github-action@v8
+        with: { eas-version: latest, token: '${{ secrets.EXPO_TOKEN }}' }
+      - run: npm ci
+      - name: Link Expo project
+        run: npx eas-cli init --non-interactive --force
+      - name: Configure updates
+        run: npx eas-cli update:configure --non-interactive || true
+      - name: Publish update (opens in Expo Go)
+        run: npx eas-cli update --branch main --message "${{ github.event.head_commit.message || 'manual' }}" --non-interactive --json > update.json && cat update.json
+      - name: Expo Go link
+        run: |
+          PID=$(node -e "console.log(require('./app.json').expo.extra.eas.projectId)")
+          echo "PROJECT_ID=$PID"
+          echo "EXPO_GO_LINK=exp://u.expo.dev/$PID?channel-name=main&runtime-version=exposdk:58.0.0"
+          echo "QR=https://qr.expo.dev/eas-update?projectId=$PID&runtimeVersion=exposdk:58.0.0&channel=main"
+      - name: Build
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.build != 'none'
+        run: npx eas-cli build -p ${{ github.event.inputs.build }} --profile preview --non-interactive --no-wait
