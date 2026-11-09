@@ -8,6 +8,7 @@ import { C } from '../../lib/theme';
 import { addr, nameOf, dstr, todayStr, ftime, initials } from '../../lib/util';
 import StatusDot from '../../components/StatusDot';
 import Icon from '../../components/Icon';
+import { BUILD } from '../../lib/build';
 
 const DAY = 864e5;
 const sod = (d) => { const x = new Date(d); x.setHours(12, 0, 0, 0); return x; };
@@ -40,7 +41,7 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.surface, paddingTop: ins.top }}>
-      <View style={st.top}><View style={st.av}><Text style={st.avT}>{initials(me?.name)}</Text></View></View>
+      <View style={st.top}><Text style={{ fontSize: 11, color: C.muted }}>Knacka · {BUILD}</Text><View style={st.av}><Text style={st.avT}>{initials(me?.name)}</Text></View></View>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <View style={st.hero}>
           <Text style={{ fontSize: 30 }}>👋</Text>
@@ -98,7 +99,7 @@ export default function Home() {
   );
 }
 const st = StyleSheet.create({
-  top: { alignItems: 'flex-end', paddingHorizontal: 14, paddingBottom: 6 },
+  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingBottom: 6 },
   av: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.teal, alignItems: 'center', justifyContent: 'center' }, avT: { color: '#fff', fontSize: 11, fontWeight: '800' },
   hero: { alignItems: 'center', backgroundColor: '#f0f0f0', paddingHorizontal: 22, paddingVertical: 14, gap: 8 },
   hello: { fontSize: 20, fontWeight: '800', color: C.ink, textAlign: 'center' },

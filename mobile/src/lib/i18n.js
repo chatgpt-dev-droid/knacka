@@ -1,4 +1,5 @@
 const sv = {
+  dayEnded: 'Dagen avslutad', dayOnFg: 'Dagen startad – rutten sparas medan appen är öppen', dayRunning: 'Arbetsdagen pågår', needLocTitle: 'Tillåt plats', needLoc: 'Knacka behöver platsåtkomst för att spara rutten. Ändra i Inställningar → Plats.', build: 'Version',
   forms: 'Formulär', noForms: 'Inga formulär än', streetInfo: 'Gatuinfo', noAppts: 'Du har inga möten inbokade den här dagen.', assignedCaps: 'ANSVARIG', statusCaps: 'STATUS', apptCaps: 'MÖTE', contactCaps: 'KONTAKT',
   region: 'Län', country: 'Sverige (SE)', setAppt: 'Boka möte', reschedule: 'Ändra möte', cancelAppt: 'Avboka möte', delTitle: 'Bekräfta', yes: 'Ja', no: 'Nej', edit: 'Ändra', copy: 'Kopiera', delete: 'Ta bort', copied: 'Kopierat',
   evStatusT: 'Status ändrad', evAppt: 'Möte ändrat', evApptOff: 'Möte avbokat', evReassign: 'Ny ansvarig', evLeadTo: 'Lead tilldelad', todayCaps: 'IDAG',
@@ -41,6 +42,7 @@ const sv = {
 };
 const en = {
   ...sv,
+  dayEnded: 'Day ended', dayOnFg: 'Day started – your route is saved while the app is open', dayRunning: 'Workday running', needLocTitle: 'Allow location', needLoc: 'Knacka needs location access to save your route. Change it in Settings → Location.', openSettings: 'Open Settings', trackInfoTitle: 'Route during the workday', trackInfo: 'When you start the day Knacka saves your position so you and the manager can see the route. Tracking stops when you end the day.', nhTitle: 'SMS to today\'s Not home', nhSub: 'Everyone gets their own SMS with their name. After sending, the status becomes SMS.', nhNone: 'No Not home leads with a phone number today.', err_gen: 'Something went wrong. Try again.',
   tHome: 'Home', tMessages: 'Messages', tTools: 'Tools', tMap: 'Map', tList: 'List', tStreet: 'Street', settings: 'Settings', filter: 'Filter', reset: 'Reset', apply: 'Apply',
   myLeads: 'My Leads', othersLeads: 'Others Leads', areasL: 'Areas', userLocations: 'User Locations', note: 'Note', add: 'Add', notesCaps: 'NOTES', appointment: 'Appointment', forms: 'Forms', noForms: 'No forms yet',
   even: 'Even', odd: 'Odd', streetInfo: 'Street Info', noStreet: 'No street nearby', goodMorning: 'Good morning', goodDay: 'Good afternoon', goodEvening: 'Good evening', myAppointments: 'My Appointments', today: 'Today',

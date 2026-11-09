@@ -95,10 +95,12 @@ export default function MapPane({ filter, focus, placeSignal }) {
   const confirmPlace = async () => { if (!region) return; setPlacing(false); const id = await newLeadAt(region.latitude, region.longitude); setSel(id); };
 
   const toggleDay = async () => {
-    if (day) { await endDay(); setDay(false); showToast(t('endDay') + ' ✓'); return; }
-    const r = await startDay(me?.name);
-    if (r === 'ok') { setDay(true); showToast(t('dayOn')); }
-    else Alert.alert(t('needBgTitle'), t('needBg'), [{ text: t('cancel'), style: 'cancel' }, { text: t('openSettings'), onPress: openAppSettings }]);
+    try {
+      if (day) { await endDay(); setDay(false); showToast(t('dayEnded')); return; }
+      const r = await startDay(me?.name);
+      if (r === 'denied') return Alert.alert(t('needLocTitle'), t('needLoc'), [{ text: t('cancel'), style: 'cancel' }, { text: t('openSettings'), onPress: openAppSettings }]);
+      setDay(true); showToast(r === 'ok' ? t('dayOn') : t('dayOnFg'));
+    } catch (e) { showToast(t('err_gen')); }
   };
 
   const teamLive = isChef && filter.team ? live.filter((x) => x.on && x.id !== user.uid && typeof x.lat === 'number' && Date.now() - (x.t || 0) < 30 * 60000) : [];
@@ -109,7 +111,7 @@ export default function MapPane({ filter, focus, placeSignal }) {
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <MapView ref={map} style={StyleSheet.absoluteFill} provider={PROVIDER_DEFAULT} initialRegion={STHLM}
         mapType={sat ? 'hybrid' : 'standard'} showsUserLocation showsMyLocationButton={false} showsPointsOfInterest={false} showsBuildings toolbarEnabled={false}
-        onRegionChangeComplete={setRegion} onPress={() => { if (sel) setSel(null); setSearching(false); Keyboard.dismiss(); }} rotateEnabled={false} pitchEnabled={false}>
+        onRegionChangeComplete={setRegion} onPress={(e) => { if (e?.nativeEvent?.action === 'marker-press') return; if (sel) setSel(null); setSearching(false); Keyboard.dismiss(); }} rotateEnabled={false} pitchEnabled={false}>
         {filter.areas ? areas.filter((a) => a.poly.length > 2).map((a) => (
           <Polygon key={a.id} coordinates={a.poly.map(([la, lo]) => ({ latitude: la, longitude: lo }))} strokeColor={a.color || C.accent} fillColor={(a.color || '#0b6e7f') + '1f'} strokeWidth={2} tappable={false} />
         )) : null}

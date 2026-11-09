@@ -2,19 +2,18 @@ import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
+import { BUILD } from '../lib/build';
 import { useApp } from '../lib/store';
 import { t } from '../lib/i18n';
 import { C, R } from '../lib/theme';
 import { initials } from '../lib/util';
-import { isDayRunning, startDay, endDay, openAppSettings } from '../lib/tracking';
+import { endDay } from '../lib/tracking';
 import { Btn, Chip, Field, H3, Sub } from '../components/ui';
 
 export default function More({ embedded, header }) {
   const ins = useSafeAreaInsets();
   const { me, user, users, isChef, saveUser, logout, lang, changeLang, showToast } = useApp();
   const [phone, setPhone] = useState(me?.phone || '');
-  const [day, setDay] = useState(false);
-  useEffect(() => { isDayRunning().then(setDay); }, []);
   const pending = users.filter((u) => !u.active && !u.off);
   const others = users.filter((u) => u.id !== user.uid && (u.active || u.off));
 
@@ -55,7 +54,7 @@ export default function More({ embedded, header }) {
       ) : null}
 
       <Btn kind="ghost" title={t('logout')} onPress={async () => { await endDay(); logout(); }} />
-      <Text style={{ textAlign: 'center', color: C.muted, fontSize: 12 }}>Knacka {Constants.expoConfig?.version || ''}</Text>
+      <Text style={{ textAlign: 'center', color: C.muted, fontSize: 12 }}>Knacka {Constants.expoConfig?.version || ''} · {BUILD}</Text>
     </ScrollView>
   );
 }

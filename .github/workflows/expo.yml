@@ -19,6 +19,8 @@ jobs:
       - uses: expo/expo-github-action@v8
         with: { eas-version: latest, token: '${{ secrets.EXPO_TOKEN }}' }
       - run: npm ci
+      - name: Stamp build
+        run: echo "export const BUILD = '$(TZ=Europe/Stockholm date '+%d %b %H:%M')';" > src/lib/build.js
       - name: Link Expo project
         run: npx eas-cli init --non-interactive --force
       - name: Configure updates

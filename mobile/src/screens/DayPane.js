@@ -44,9 +44,14 @@ export default function DayPane() {
       <View style={st.card}>
         <H3>{t('trackInfoTitle')}</H3><Sub>{t('trackInfo')}</Sub>
         <Btn icon={day ? 'stop' : 'play'} kind={day ? 'ghost' : 'primary'} title={day ? t('endDay') : t('startDay')} onPress={async () => {
-          if (day) { await endDay(); setDay(false); return; }
-          const r = await startDay(me?.name); if (r === 'ok') { setDay(true); showToast(t('dayOn')); } else Alert.alert(t('needBgTitle'), t('needBg'), [{ text: t('cancel'), style: 'cancel' }, { text: t('openSettings'), onPress: openAppSettings }]);
+          try {
+            if (day) { await endDay(); setDay(false); showToast(t('dayEnded')); return; }
+            const r = await startDay(me?.name);
+            if (r === 'denied') return Alert.alert(t('needLocTitle'), t('needLoc'), [{ text: t('cancel'), style: 'cancel' }, { text: t('openSettings'), onPress: openAppSettings }]);
+            setDay(true); showToast(r === 'ok' ? t('dayOn') : t('dayOnFg'));
+          } catch (e) { showToast(t('err_gen')); }
         }} />
+        {day ? <Sub>● {t('dayRunning')}</Sub> : null}
       </View>
       <View style={st.card}>
         <H3>{t('planRoute')}</H3>

@@ -8,6 +8,7 @@ import { auth, db } from './firebase';
 import { makeStatus } from './status';
 import { setLang, t } from './i18n';
 import { DAY, dstr, todayStr, inPoly } from './util';
+import { recordFix } from './tracking';
 
 export const CHEF_EMAILS = ['hej@fiskaren.nu', 'karen@fiskaren.nu'];
 const Ctx = createContext(null);
@@ -91,7 +92,7 @@ export function AppProvider({ children }) {
       if (status !== 'granted' || cancelled) return;
       sub = await Location.watchPositionAsync({ accuracy: Location.Accuracy.High, distanceInterval: 8 }, (p) => {
         const h = { lat: p.coords.latitude, lng: p.coords.longitude, t: Date.now(), acc: p.coords.accuracy };
-        hereRef.current = h; setHere(h);
+        hereRef.current = h; setHere(h); recordFix(h);
       });
     })();
     return () => { cancelled = true; if (sub) sub.remove(); };
