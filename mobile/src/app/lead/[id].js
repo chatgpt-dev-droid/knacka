@@ -5,14 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../lib/store';
 import { t } from '../../lib/i18n';
 import { C, R } from '../../lib/theme';
-import { addr, nameOf, fdt, fdate, meters, fdist, initials, dstr, DAY } from '../../lib/util';
+import { addr, nameOf, fdt, fdate, ftime, meters, fdist, initials, dstr, DAY } from '../../lib/util';
 import { call, mail, navigate } from '../../lib/links';
 import Icon from '../../components/Icon';
 import StatusDot from '../../components/StatusDot';
 import { Chip, Field, H3, Sub, Btn } from '../../components/ui';
 import { useDatePick } from '../../components/DatePick';
 
-const FIELDS = [['first', 'first'], ['last', 'last'], ['phone', 'phone', 'phone-pad'], ['email', 'email', 'email-address'], ['company', 'company']];
+const FIELDS = [['company', 'company'], ['first', 'first'], ['last', 'last'], ['phone', 'phone', 'phone-pad'], ['email', 'email', 'email-address']];
 const AFIELDS = [['street', 'street'], ['num', 'number'], ['apt', 'apt'], ['zip', 'zip', 'number-pad'], ['city', 'city']];
 
 export default function LeadDetail() {
@@ -54,8 +54,9 @@ export default function LeadDetail() {
         <Pressable hitSlop={12} onPress={() => { flush(); router.back(); }} style={st.back} accessibilityLabel="Tillbaka"><Icon name="back" size={26} color={C.ink} /></Pressable>
         <StatusDot st={s} size={40} />
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={st.title} numberOfLines={1}>{addr(lead)}{lead.apt ? `, ${lead.apt}` : ''}</Text>
-          <Text style={st.sub} numberOfLines={1}>{[nameOf(lead), lead.status && lead.status !== 'ny' ? s.label : t('st_ny'), area?.name].filter(Boolean).join('  ·  ')}</Text>
+          <Text style={st.title} numberOfLines={1}>{nameOf(lead) || lead.company || t('noName')}</Text>
+          <Text style={st.sub} numberOfLines={1}>{lead.status && lead.status !== 'ny' ? s.label : t('st_ny')}</Text>
+          <Text style={st.sub} numberOfLines={1}>{[`${addr(lead)}${lead.apt ? ` ${lead.apt}` : ''}`, lead.city, lead.zip].filter(Boolean).join(', ')}</Text>
         </View>
       </View>
       <View style={st.tabs}>
@@ -90,6 +91,14 @@ export default function LeadDetail() {
               {lead.meeting || lead.revisit ? <Chip icon="x" title={t('clear')} onPress={() => updLead(id, { meeting: null, revisit: null })} /> : null}
             </View>
             <View style={st.card}>
+              <H3>{t('assignedTo')}</H3>
+              {isChef ? (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {team.map((u) => <Chip key={u.id} title={u.name} on={lead.owner === u.id} onPress={() => assignLead(lead, u.id)} />)}
+                </View>
+              ) : <Sub>{rep(lead.owner).name}</Sub>}
+            </View>
+            <View style={st.card}>
               <H3>{t('contact')}</H3>
               {FIELDS.map(([k, l, kb]) => <Field key={k} label={t(l)} value={val(k)} onChangeText={(v) => edit(k, v)} keyboardType={kb} autoCapitalize={k === 'email' ? 'none' : 'words'} />)}
               <View style={st.row}>
@@ -100,14 +109,6 @@ export default function LeadDetail() {
             <View style={st.card}>
               <H3>{t('address')}</H3>
               {AFIELDS.map(([k, l, kb]) => <Field key={k} label={t(l)} value={val(k)} onChangeText={(v) => edit(k, v)} keyboardType={kb} />)}
-            </View>
-            <View style={st.card}>
-              <H3>{t('assignedTo')}</H3>
-              {isChef ? (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {team.map((u) => <Chip key={u.id} title={u.name} on={lead.owner === u.id} onPress={() => assignLead(lead, u.id)} />)}
-                </View>
-              ) : <Sub>{rep(lead.owner).name}</Sub>}
             </View>
             {canDel ? <Btn kind="danger" icon="trash" title={t('del')} onPress={() => Alert.alert(t('delQ'), addr(lead), [{ text: t('cancel'), style: 'cancel' }, { text: t('yesDel'), style: 'destructive', onPress: () => { deleteLead(id); router.back(); } }])} /> : null}
           </>
@@ -129,7 +130,16 @@ export default function LeadDetail() {
         ) : null}
 
         {tab === 'act' ? (
-          events.length ? events.map((e, i) => <Event key={e.t + e.kind + i} e={e} lead={lead} />) : <Sub>{t('noActivity')}</Sub>
+          events.length ? events.map((e, i) => {
+            const day = new Date(e.t).toDateString();
+            const head = i === 0 || new Date(events[i - 1].t).toDateString() !== day;
+            return (
+              <View key={e.t + e.kind + i}>
+                {head ? <Text style={st.day}>{new Date(e.t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</Text> : null}
+                <Event e={e} lead={lead} last={i === events.length - 1 || new Date(events[i + 1].t).toDateString() !== day} />
+              </View>
+            );
+          }) : <Sub>{t('noActivity')}</Sub>
         ) : null}
       </ScrollView>
       {picker.node}
@@ -137,27 +147,28 @@ export default function LeadDetail() {
   );
 }
 
-function Event({ e, lead }) {
+function Event({ e, lead, last }) {
   const { S, rep } = useApp();
   const who = rep(e.rep).name;
-  let icon = 'note', color = C.muted, title = '';
-  if (e.kind === 'status') { const s = S.st(e.s); icon = s.icon || 'minus'; color = s.color; title = `${t('evStatus')} ${s.label || t('st_ny')}`; }
-  else if (e.kind === 'create') { icon = 'plus'; color = C.accent; title = t('evCreate'); }
-  else if (e.kind === 'assign') { icon = 'users'; color = C.accent; title = `${t('evAssignTo')} ${rep(e.to).name}`; }
-  else if (e.kind === 'note') { icon = 'note'; color = C.ink; title = t('evNote'); }
-  else if (e.kind === 'smsIn') { icon = 'sms'; color = C.sms; title = t('evSmsIn'); }
-  else if (e.kind === 'smsOut') { icon = 'sms'; color = C.sms; title = t('evSmsOut'); }
+  let dot = null, title = '';
+  if (e.kind === 'status') { const s = S.st(e.s); dot = <StatusDot st={s} size={30} />; title = `${t('evStatus')} ${s.label || t('st_ny')}`; }
+  else if (e.kind === 'create') { dot = <View style={[st.evI, { backgroundColor: '#5f747d' }]} />; title = t('evCreate'); }
+  else if (e.kind === 'assign') { const n = rep(e.to).name; dot = <View style={[st.evI, { backgroundColor: C.accent }]}><Text style={st.evIn}>{initials(n)}</Text></View>; title = `${t('evAssignTo')} ${n}`; }
+  else if (e.kind === 'note') { dot = <View style={[st.evI, { backgroundColor: '#d64541' }]}><Icon name="note" size={15} color="#fff" /></View>; title = t('evNote'); }
+  else { dot = <View style={[st.evI, { backgroundColor: C.sms }]}><Icon name="sms" size={15} color="#fff" /></View>; title = e.kind === 'smsIn' ? t('evSmsIn') : t('evSmsOut'); }
   const d = typeof e.lat === 'number' ? meters([e.lat, e.lng], [lead.lat, lead.lng]) : null;
   return (
     <View style={st.ev}>
-      <View style={[st.evI, { backgroundColor: color }]}><Icon name={icon} size={16} color="#fff" /></View>
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ alignItems: 'center', width: 30 }}>{dot}{!last ? <View style={st.line} /> : null}</View>
+      <View style={{ flex: 1, gap: 2, paddingBottom: 16 }}>
         <Text style={st.evT}>{title}</Text>
         {e.text ? <Text style={st.evX}>{e.text}</Text> : null}
-        <Text style={st.evM}>{who && who !== '—' ? `${t('by')} ${who}  ·  ` : ''}{fdt(e.t)}</Text>
+        <Text style={st.evM}>{who && who !== '—' ? `${t('by')} ${who} ` : ''}{t('at')} {ftime(e.t)}</Text>
       </View>
-      {d != null ? <View style={[st.dist, d <= 75 ? { backgroundColor: '#e3f4ea' } : { backgroundColor: '#fdf0dc' }]}><Text style={[st.distT, { color: d <= 75 ? C.ok : '#9a6100' }]}>{fdist(d)}</Text></View>
-        : e.kind === 'status' || e.kind === 'note' ? <Text style={st.evM}>{t('noLocation')}</Text> : null}
+      <View style={st.loc}>
+        <Text style={[st.evM, d != null && d <= 75 && { color: C.ok, fontWeight: '700' }]}>{d != null ? fdist(d) : t('noLocation')}</Text>
+        <Icon name="nav" size={13} color={d != null && d <= 75 ? C.ok : C.muted} />
+      </View>
     </View>
   );
 }
@@ -187,8 +198,12 @@ const st = StyleSheet.create({
   noteIn: { minHeight: 90, borderRadius: 12, borderWidth: 1, borderColor: C.line, backgroundColor: C.surface, padding: 12, fontSize: 16, color: C.ink, textAlignVertical: 'top' },
   noteCard: { backgroundColor: C.surface, borderRadius: R.md, padding: 12, gap: 6 },
   noteT: { fontSize: 15.5, color: C.ink, lineHeight: 21 }, noteM: { fontSize: 12.5, color: C.muted },
-  ev: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: C.surface, borderRadius: R.md, padding: 12 },
+  ev: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   evI: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  evIn: { color: '#fff', fontSize: 11, fontWeight: '800' },
+  line: { width: 2, flex: 1, backgroundColor: C.line, marginTop: 4 },
+  loc: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  day: { fontSize: 15, fontWeight: '800', color: C.ink, marginBottom: 10, marginTop: 4 },
   evT: { fontSize: 15, fontWeight: '700', color: C.ink }, evX: { fontSize: 14.5, color: C.ink }, evM: { fontSize: 12.5, color: C.muted },
   dist: { borderRadius: R.pill, paddingHorizontal: 8, paddingVertical: 3 }, distT: { fontSize: 12, fontWeight: '800' },
 });

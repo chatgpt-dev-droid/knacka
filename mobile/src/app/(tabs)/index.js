@@ -65,6 +65,22 @@ export default function MapScreen() {
     return ls;
   }, [leads, region, mine, user]);
 
+  // like SalesRabbit: zoomed out → red count bubbles, zoomed in → status pins
+  const clusters = useMemo(() => {
+    if (!region || region.latitudeDelta < 0.012) return null;
+    const cell = region.latitudeDelta / 7, cellLo = region.longitudeDelta / 5;
+    const g = new Map();
+    let ls = leads.filter((l) => typeof l.lat === 'number');
+    if (mine) ls = ls.filter((l) => l.owner === user.uid);
+    for (const l of ls) {
+      if (Math.abs(l.lat - region.latitude) > region.latitudeDelta || Math.abs(l.lng - region.longitude) > region.longitudeDelta) continue;
+      const key = Math.floor(l.lat / cell) + ':' + Math.floor(l.lng / cellLo);
+      const c = g.get(key) || { n: 0, la: 0, lo: 0, id: key };
+      c.n++; c.la += l.lat; c.lo += l.lng; g.set(key, c);
+    }
+    return [...g.values()].map((c) => ({ ...c, la: c.la / c.n, lo: c.lo / c.n }));
+  }, [leads, region, mine, user]);
+
   const today = todayStr();
   const stats = useMemo(() => {
     let k = 0, ld = 0, sa = 0;
@@ -116,7 +132,12 @@ export default function MapScreen() {
         {(showTeam ? tracks : tracks.filter((x) => x.uid === user.uid)).filter((x) => (x.points || []).length > 1).map((x) => (
           <Polyline key={x.uid} coordinates={x.points.map((p) => ({ latitude: p.lat, longitude: p.lng }))} strokeColor={colorFor(x.uid)} strokeWidth={4} lineCap="round" lineJoin="round" />
         ))}
-        {visible.map((l) => <Pin key={l.id} lead={l} st={S.st(l.status)} selected={l.id === sel} onPress={open} />)}
+        {clusters ? clusters.map((c) => (
+          <Marker key={'c' + c.id + c.n} coordinate={{ latitude: c.la, longitude: c.lo }} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}
+            onPress={() => map.current?.animateToRegion({ latitude: c.la, longitude: c.lo, latitudeDelta: region.latitudeDelta / 3.5, longitudeDelta: region.longitudeDelta / 3.5 }, 400)}>
+            <View style={[st.clu, c.n > 99 && { width: 46, height: 46, borderRadius: 23 }]}><Text style={st.cluT}>{c.n}</Text></View>
+          </Marker>
+        )) : visible.map((l) => <Pin key={l.id} lead={l} st={S.st(l.status)} selected={l.id === sel} onPress={open} />)}
         {teamLive.map((x) => (
           <Marker key={'live' + x.id} coordinate={{ latitude: x.lat, longitude: x.lng }} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false} title={x.name || nameFor(x.id)} description={`${t('lastSeen')} ${rel(x.t)}`}>
             <View style={[st.live, { backgroundColor: colorFor(x.id) }]}><Text style={st.liveT}>{initials(x.name || nameFor(x.id))}</Text></View>
@@ -216,6 +237,8 @@ const st = StyleSheet.create({
   pill: { height: 50, borderRadius: R.md, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
   pillT: { color: '#fff', fontWeight: '800', fontSize: 16 },
   pillGhost: { backgroundColor: C.soft }, pillGT: { color: C.ink, fontWeight: '800', fontSize: 16 },
+  clu: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#e8423f', alignItems: 'center', justifyContent: 'center', borderWidth: 5, borderColor: 'rgba(232,66,63,0.3)' },
+  cluT: { color: '#fff', fontWeight: '800', fontSize: 13 },
   live: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff' },
   liveT: { color: '#fff', fontWeight: '900', fontSize: 12 },
 });

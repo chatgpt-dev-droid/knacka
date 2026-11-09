@@ -12,7 +12,7 @@ const sv = {
   address: 'Adress', street: 'Gata', number: 'Nr', apt: 'Lgh', zip: 'Postnummer', city: 'Ort', noArea: 'Utanför område', statusH: 'Status', smsOk: 'Ok med SMS (samtycke)',
   clear: 'Rensa', w1: '1 vecka', w2: '2 veckor', w4: '4 veckor', w8: '8 veckor', del: 'Ta bort lead', delQ: 'Ta bort för gott?', yesDel: 'Ja, ta bort', cancel: 'Avbryt', done: 'Klar',
   evAssign: 'Ny ansvarig', evAssignTo: 'Tilldelad', evCreate: 'Lead skapad', evStatus: 'Status:', evNote: 'Anteckning', evSmsIn: 'SMS från kunden', evSmsOut: 'SMS skickat', noActivity: 'Ingen aktivitet än.', noLocation: 'Ingen plats', by: 'av', at: 'kl',
-  noAddr: 'Adress saknas', never: 'aldrig besökt', min: 'min', h: 'tim', d: 'd', ago: 'sedan',
+  noAddr: 'Adress saknas', noName: 'Inget namn', never: 'aldrig besökt', min: 'min', h: 'tim', d: 'd', ago: 'sedan',
   placeHere: 'Sätt nål här', placeHint: 'Flytta kartan så att nålen hamnar på huset.',
   leadsTitle: 'Leads', searchPh: 'Sök adress, namn eller telefon', all: 'Alla', mine: 'Mina', dueL: 'Återbesök', interested: 'Intresserade', meetings: 'Möten', customers: 'Kunder', noLeads: 'Inga leads här än. Gå till kartan och tryck på + för att lägga till den första.', sortNear: 'Närmast', sortRecent: 'Senaste',
   calTitle: 'Kalender', overdue: 'Försenade återbesök', nothingDay: 'Inget inbokat den här dagen.', planRoute: 'Planera rutt', noStops: 'Inga stopp med plats.', routeStops: 'stopp', openMaps: 'Öppna i Kartor', endRoute: 'Avsluta rutt',
