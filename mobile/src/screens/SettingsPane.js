@@ -27,15 +27,6 @@ export default function More({ embedded, header }) {
       </View>
 
       <View style={st.card}>
-        <H3>{t('trackInfoTitle')}</H3>
-        <Sub>{t('trackInfo')}</Sub>
-        <Btn icon={day ? 'stop' : 'play'} title={day ? t('endDay') : t('startDay')} kind={day ? 'ghost' : 'primary'} onPress={async () => {
-          if (day) { await endDay(); setDay(false); return; }
-          const r = await startDay(me?.name); if (r === 'ok') { setDay(true); showToast(t('dayOn')); } else openAppSettings();
-        }} />
-      </View>
-
-      <View style={st.card}>
         <Field label={t('myPhone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" onEndEditing={() => { if ((me?.phone || '') !== phone.trim()) saveUser(user.uid, { phone: phone.trim() }); }} />
         <H3>{t('lang')}</H3>
         <View style={{ flexDirection: 'row', gap: 8 }}>

@@ -26,7 +26,7 @@ const Tool = ({ name, onPress, active, label }) => (
   </Pressable>
 );
 
-export default function MapPane({ filter, focus }) {
+export default function MapPane({ filter, focus, placeSignal }) {
   const { leads, S, here, user, me, isChef, live, areas, newLeadAt, showToast, users } = useApp();
   const map = useRef(null);
   const [region, setRegion] = useState(null);
@@ -44,6 +44,7 @@ export default function MapPane({ filter, focus }) {
   useEffect(() => {
     if (here && !centered.current && map.current) { centered.current = true; map.current.animateToRegion({ latitude: here.lat, longitude: here.lng, latitudeDelta: 0.006, longitudeDelta: 0.006 }, 600); }
   }, [here]);
+  useEffect(() => { if (placeSignal) { setSel(null); setPlacing(true); } }, [placeSignal]);
   // a lead chosen in the List or Street tab
   useEffect(() => {
     if (!focus) return;
@@ -132,12 +133,12 @@ export default function MapPane({ filter, focus }) {
       <View style={[st.col, { left: 10 }]}>
         <Tool name="search" label={t('searchPh')} active={searching} onPress={() => setSearching((v) => !v)} />
         <Tool name="route" label={day ? t('endDay') : t('startDay')} active={day} onPress={toggleDay} />
-        <Tool name="plus" label={t('placeHere')} active={placing} onPress={() => { setSel(null); setPlacing(true); }} />
+        <Tool name="hand" label={t('placeHere')} active={placing} onPress={() => { setSel(null); setPlacing((v) => !v); }} />
       </View>
       {/* right column */}
       <View style={[st.col, { right: 10 }]}>
         <Tool name="layers" label="Satellit" active={sat} onPress={() => setSat((v) => !v)} />
-        <Tool name="target" label="Min plats" onPress={locate} />
+        <Tool name="pindrop" label={t('placeHere')} onPress={async () => { if (!here) return showToast(t('noGps')); const id = await newLeadAt(here.lat, here.lng); setSel(id); locate(); }} />
       </View>
 
       {searching ? (
@@ -196,7 +197,7 @@ const st = StyleSheet.create({
   results: { backgroundColor: C.surface, borderRadius: 10, maxHeight: 320, overflow: 'hidden' },
   res: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, paddingVertical: 9, borderBottomWidth: 1, borderColor: C.soft },
   resT: { fontSize: 15, fontWeight: '700', color: C.ink }, resS: { fontSize: 13, color: C.muted },
-  nav: { position: 'absolute', right: 12, bottom: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
+  nav: { position: 'absolute', right: 10, bottom: 14, width: 40, height: 40, borderRadius: 8, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
   dayPill: { position: 'absolute', left: 12, bottom: 18, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.surface, borderRadius: R.pill, paddingHorizontal: 14, height: 40 },
   dayDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: C.ok },
   dayT: { fontSize: 13.5, fontWeight: '700', color: C.ink },

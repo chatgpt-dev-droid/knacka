@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { t } from '../lib/i18n';
 import { C } from '../lib/theme';
 import Icon from './Icon';
 
 // SalesRabbit's "Note" sheet: X – Note – Add
-export default function NoteSheet({ visible, onClose, onAdd }) {
+export default function NoteSheet({ visible, onClose, onAdd, initial }) {
   const [txt, setTxt] = useState('');
+  useEffect(() => { if (visible) setTxt(initial || ''); }, [visible, initial]);
   const add = () => { const v = txt.trim(); if (!v) return; onAdd(v); setTxt(''); };
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -19,6 +20,7 @@ export default function NoteSheet({ visible, onClose, onAdd }) {
             <Pressable hitSlop={12} onPress={add} disabled={!txt.trim()}><Text style={[st.add, !txt.trim() && { opacity: 0.4 }]}>{t('add')}</Text></Pressable>
           </View>
           <TextInput autoFocus value={txt} onChangeText={setTxt} placeholder={t('addNotePh')} placeholderTextColor={C.muted} multiline style={st.in} maxLength={5000} />
+          <Text style={{ textAlign: 'right', color: C.muted, fontSize: 12, paddingHorizontal: 16, paddingBottom: 10 }}>{txt.length}/5000</Text>
         </View>
       </KeyboardAvoidingView>
     </Modal>

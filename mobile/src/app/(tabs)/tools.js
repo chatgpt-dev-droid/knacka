@@ -5,19 +5,20 @@ import { t } from '../../lib/i18n';
 import { C } from '../../lib/theme';
 import CompetePane from '../../screens/CompetePane';
 import SettingsPane from '../../screens/SettingsPane';
+import DayPane from '../../screens/DayPane';
 
 export default function Tools() {
   const ins = useSafeAreaInsets();
-  const [tab, setTab] = useState('comp');
+  const [tab, setTab] = useState('day');
   return (
     <View style={{ flex: 1, backgroundColor: C.bg, paddingTop: ins.top }}>
       <Text style={st.title}>{t('tTools')}</Text>
       <View style={st.tabs}>
-        {[['comp', t('tComp')], ['set', t('settings')]].map(([k, l]) => (
+        {[['day', t('tDay')], ['comp', t('tComp')], ['set', t('settings')]].map(([k, l]) => (
           <Pressable key={k} onPress={() => setTab(k)} style={[st.tab, tab === k && st.tabOn]}><Text style={[st.tabT, tab === k && { color: C.red }]}>{l}</Text></Pressable>
         ))}
       </View>
-      {tab === 'comp' ? <CompetePane embedded /> : <SettingsPane embedded />}
+      {tab === 'day' ? <DayPane /> : tab === 'comp' ? <CompetePane embedded /> : <SettingsPane embedded />}
     </View>
   );
 }

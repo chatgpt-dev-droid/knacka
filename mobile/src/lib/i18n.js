@@ -1,4 +1,10 @@
 const sv = {
+  forms: 'Formulär', noForms: 'Inga formulär än', streetInfo: 'Gatuinfo', noAppts: 'Du har inga möten inbokade den här dagen.', assignedCaps: 'ANSVARIG', statusCaps: 'STATUS', apptCaps: 'MÖTE', contactCaps: 'KONTAKT',
+  region: 'Län', country: 'Sverige (SE)', setAppt: 'Boka möte', reschedule: 'Ändra möte', cancelAppt: 'Avboka möte', delTitle: 'Bekräfta', yes: 'Ja', no: 'Nej', edit: 'Ändra', copy: 'Kopiera', delete: 'Ta bort', copied: 'Kopierat',
+  evStatusT: 'Status ändrad', evAppt: 'Möte ändrat', evApptOff: 'Möte avbokat', evReassign: 'Ny ansvarig', evLeadTo: 'Lead tilldelad', todayCaps: 'IDAG',
+  searchBy: 'Sök i', sAll: 'Allt (utom anteckningar)', sName: 'Namn', sFirst: 'Förnamn', sLast: 'Efternamn', sBiz: 'Företag', sStreet: 'Gatuadress', sCity: 'Ort', sNotes: 'Anteckningar',
+  sortBy: 'Sortera', asc: 'Stigande', desc: 'Fallande', oUpdated: 'Senast ändrad', oName: 'Namn', oStreet: 'Gatunamn', oDist: 'Avstånd', oAppt: 'Möte',
+  users: 'Användare', selectAll: 'Välj alla', searchUsers: 'Sök användare', rep: 'Säljare', manager: 'Chef', msgPh: 'Meddelande', newChat: 'Ny konversation', tDay: 'Dagen',
   tHome: 'Hem', tMessages: 'Meddelanden', tTools: 'Verktyg', tList: 'Lista', tStreet: 'Gata', settings: 'Inställningar',
   filter: 'Filter', reset: 'Återställ', apply: 'Använd', myLeads: 'Mina leads', othersLeads: 'Andras leads', areasL: 'Områden', userLocations: 'Säljarnas position',
   note: 'Anteckning', add: 'Lägg till', notesCaps: 'ANTECKNINGAR', appointment: 'Möte', even: 'Jämna', odd: 'Udda', noStreet: 'Ingen gata i närheten',
@@ -35,12 +41,26 @@ const sv = {
 };
 const en = {
   ...sv,
-  tHome: 'Home', tMessages: 'Messages', tTools: 'Tools', tList: 'List', tStreet: 'Street', settings: 'Settings', filter: 'Filter', reset: 'Reset', apply: 'Apply', myLeads: 'My Leads', othersLeads: "Others' Leads", areasL: 'Areas', userLocations: 'User Locations', note: 'Note', add: 'Add', notesCaps: 'NOTES', appointment: 'Appointment', even: 'Even', odd: 'Odd', goodMorning: 'Good morning', goodDay: 'Good afternoon', goodEvening: 'Good evening', myAppointments: 'My Appointments',
-  tMap: 'Map', tLeads: 'Leads', tCal: 'Calendar', tComp: 'Compete', tMore: 'More', login: 'Log in', register: 'Create account', yourName: 'Your name', email: 'Email', password: 'Password', logout: 'Log out',
-  details: 'Details', bookMeeting: 'Book meeting', setRevisit: 'Revisit', meeting: 'Appointment', revisit: 'Revisit', notes: 'Notes', addNotePh: 'Write a note…', call: 'Call', nav: 'Navigate', assignedTo: 'Assigned to', activity: 'Activity',
-  startDay: 'Start day', endDay: 'End day', dayOn: 'Workday running – your route is saved', dayOff: 'Start the day to save your route', undo: 'Undo', saved: 'Saved', cancel: 'Cancel', done: 'Done',
+  tHome: 'Home', tMessages: 'Messages', tTools: 'Tools', tMap: 'Map', tList: 'List', tStreet: 'Street', settings: 'Settings', filter: 'Filter', reset: 'Reset', apply: 'Apply',
+  myLeads: 'My Leads', othersLeads: 'Others Leads', areasL: 'Areas', userLocations: 'User Locations', note: 'Note', add: 'Add', notesCaps: 'NOTES', appointment: 'Appointment', forms: 'Forms', noForms: 'No forms yet',
+  even: 'Even', odd: 'Odd', streetInfo: 'Street Info', noStreet: 'No street nearby', goodMorning: 'Good morning', goodDay: 'Good afternoon', goodEvening: 'Good evening', myAppointments: 'My Appointments', today: 'Today',
+  quote: 'If you want people to know how much you care, show them how much you remember. Learn their names and use them often.', noAppts: 'You currently have no appointments scheduled on this day.',
+  info: 'Info', notes: 'Notes', activity: 'Activity', details: 'Details', assignedTo: 'Assigned to', assignedCaps: 'ASSIGNED TO', statusCaps: 'STATUS', apptCaps: 'APPOINTMENT', contactCaps: 'CONTACT INFO',
+  company: 'Business Name', first: 'First Name', last: 'Last Name', phone: 'Phone', email: 'Email', street: 'Street Address', apt: 'Apt/Suite', city: 'City', region: 'State/Region', zip: 'Postal Code', country: 'Sweden (SE)',
+  setAppt: 'Set Appointment', reschedule: 'Reschedule Appointment', cancelAppt: 'Cancel Appointment', del: 'Delete Lead', delTitle: 'Please Confirm', delQ: 'Are you sure you want to delete this lead?', yes: 'Yes', no: 'No',
+  addNotePh: 'Add a note...', edit: 'Edit', copy: 'Copy', delete: 'Delete', copied: 'Copied',
+  evNote: 'Note Added', evStatusT: 'Status Updated', evAppt: 'Appointment Updated', evApptOff: 'Appointment Cancelled', evReassign: 'Reassigned', evCreate: 'Lead Created', evLeadTo: 'Lead assigned to', evSmsIn: 'SMS received', evSmsOut: 'SMS sent', noLocation: 'No Location', by: 'by', at: 'at', todayCaps: 'TODAY', noActivity: 'No activity yet.',
+  searchBy: 'Search By', sAll: 'All (except notes)', sName: 'Name', sFirst: 'First Name', sLast: 'Last Name', sBiz: 'Business Name', sStreet: 'Street Address', sCity: 'City', sNotes: 'Notes',
+  sortBy: 'Sort By', asc: 'Ascending', desc: 'Descending', oUpdated: 'Last Updated', oName: 'Name', oStreet: 'Street Name', oDist: 'Distance', oAppt: 'Appointment',
+  noConvos: 'No conversations yet', users: 'Users', selectAll: 'Select All', searchUsers: 'Search Users', rep: 'Rep', manager: 'Manager', msgPh: 'Message', newChat: 'New conversation',
+  cancel: 'Cancel', done: 'Done', st_ny: 'Not visited', statusSet: 'Status: ', undo: 'Undo', undone: 'Undone', saved: 'Saved', noteAdded: 'Note added', noName: '-', noAddr: 'No address',
+  placeHere: 'Drop pin here', placeHint: 'Move the map so the pin is on the house.', searchPh: 'Search', noLeads: 'No leads here yet.', leadsW: 'leads', knocks: 'knocks', sales: 'sales', you: 'you',
+  tComp: 'Leaderboard', tDay: 'Today', compTitle: 'Leaderboard', day: 'Today', week: 'Week', month: 'Month', mKnocks: 'Knocks', mLeads: 'Leads', mSales: 'Sales',
+  startDay: 'Start day', endDay: 'End day', dayOn: 'Workday running – your route is saved', planRoute: 'Plan route', routeStops: 'stops', noStops: 'No stops with a location.',
+  logout: 'Log out', lang: 'Language', team: 'Team', approve: 'Approve', deactivate: 'Deactivate', activate: 'Activate', pending: 'Pending', inactive: 'Inactive', role_chef: 'Manager', role_saljare: 'Rep', myPhone: 'Your mobile number (shown in SMS)',
+  login: 'Log in', register: 'Create account', yourName: 'Your name', password: 'Password',
 };
-let lang = 'sv';
+let lang = 'en';
 export const setLang = (l) => { lang = l === 'en' ? 'en' : 'sv'; };
 export const getLang = () => lang;
 export const t = (k) => (lang === 'en' ? en : sv)[k] ?? sv[k] ?? k;

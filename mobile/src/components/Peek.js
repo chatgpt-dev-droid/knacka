@@ -13,13 +13,12 @@ import NoteSheet from './NoteSheet';
 
 // Bottom card when a pin is tapped – same layout as SalesRabbit's mobile app
 export default function Peek({ lead, onClose, picker }) {
-  const { S, setStatus, addNote, updLead, rep, settings, me } = useApp();
+  const { S, setStatus, addNote, setMeeting, rep, showToast } = useApp();
   const [noting, setNoting] = useState(false);
   if (!lead) return null;
   const s = S.st(lead.status);
   const owner = rep(lead.owner);
   const notes = (lead.notes || []).slice(-2).reverse();
-  const smsBody = (settings.tmplNH || t('tmplNHDefault')).replace('{namn}', lead.first || '').replace('{adress}', addr(lead)).replace('{säljare}', me?.name || '').replace('{telefon}', me?.phone || '');
   const full = [addr(lead), lead.city, lead.zip].filter(Boolean).join(', ');
 
   return (
@@ -47,11 +46,11 @@ export default function Peek({ lead, onClose, picker }) {
       </ScrollView>
 
       <View style={st.chips}>
-        <Pressable style={st.chip} onPress={() => picker.open('datetime', lead.meeting || Date.now() + DAY, t('bookMeeting'), (d) => updLead(lead.id, { meeting: d.getTime() }))}>
+        <Pressable style={st.chip} onPress={() => picker.open('datetime', lead.meeting || Date.now() + DAY, t('setAppt'), (d) => setMeeting(lead, d.getTime()))}>
           <Icon name="cal" size={16} color={C.red} /><Text style={st.chipT}>{lead.meeting ? fdt(lead.meeting) : t('appointment')}</Text>
         </Pressable>
-        <Pressable style={st.chip} onPress={() => picker.open('date', lead.revisit ? lead.revisit + 'T12:00:00' : Date.now() + 14 * DAY, t('setRevisit'), (d) => updLead(lead.id, { revisit: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }))}>
-          <Icon name="refresh" size={16} color={C.red} /><Text style={st.chipT}>{lead.revisit || t('setRevisit')}</Text>
+        <Pressable style={st.chip} onPress={() => showToast(t('noForms'))}>
+          <Icon name="note" size={16} color={C.red} /><Text style={st.chipT}>{t('forms')}</Text>
         </Pressable>
       </View>
 
@@ -61,9 +60,9 @@ export default function Peek({ lead, onClose, picker }) {
 
       <View style={st.acts}>
         <Act icon="phone" disabled={!lead.phone} onPress={() => call(lead.phone)} label={t('call')} />
-        <Act icon="sms" disabled={!lead.phone} onPress={() => SMS.sendSMSAsync([lead.phone], smsBody).catch(() => {})} label={t('sms')} />
+        <Act icon="chat" disabled={!lead.phone} onPress={() => SMS.sendSMSAsync([lead.phone], '').catch(() => {})} label={t('sms')} />
         <Act icon="mail" disabled={!lead.email} onPress={() => mail(lead.email)} label={t('mailL')} />
-        <Act icon="nav" onPress={() => navigate(lead.lat, lead.lng)} label={t('nav')} />
+        <Act icon="share" circle onPress={() => navigate(lead.lat, lead.lng)} label={t('nav')} />
       </View>
       <Text style={st.foot}>{t('assignedTo')}: <Text style={{ fontWeight: '800', color: C.ink }}>{owner.name}</Text></Text>
       <NoteSheet visible={noting} onClose={() => setNoting(false)} onAdd={(txt) => { addNote(lead, txt); setNoting(false); }} />
@@ -71,9 +70,9 @@ export default function Peek({ lead, onClose, picker }) {
   );
 }
 
-const Act = ({ icon, onPress, disabled, label }) => (
-  <Pressable onPress={onPress} disabled={disabled} hitSlop={8} accessibilityLabel={label} style={({ pressed }) => [st.act, disabled && { opacity: 0.3 }, pressed && { opacity: 0.6 }]}>
-    <Icon name={icon} size={22} color={C.ink} />
+const Act = ({ icon, onPress, disabled, label, circle }) => (
+  <Pressable onPress={onPress} disabled={disabled} hitSlop={8} accessibilityLabel={label} style={({ pressed }) => [st.act, circle && { backgroundColor: '#efefef', borderRadius: 20, width: 40 }, pressed && { opacity: 0.6 }]}>
+    <Icon name={icon} size={21} color={disabled ? '#b5b5b5' : C.ink} />
   </Pressable>
 );
 

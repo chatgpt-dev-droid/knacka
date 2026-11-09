@@ -14,7 +14,7 @@ export default function FilterSheet({ visible, value, onChange, onClose }) {
   const sts = value.statuses || [];
   const toggleSt = (k) => set('statuses', sts.includes(k) ? sts.filter((x) => x !== k) : [...sts, k]);
   const Row = ({ k, label }) => (
-    <View style={st.row}><Text style={st.rowT}>{label}</Text><Switch value={!!value[k]} onValueChange={(v) => set(k, v)} trackColor={{ true: C.red }} /></View>
+    <View style={st.row}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><Icon name="chevD" size={16} color={C.ink} /><Text style={st.rowT}>{label}</Text></View><Switch value={!!value[k]} onValueChange={(v) => set(k, v)} trackColor={{ true: C.red }} /></View>
   );
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>

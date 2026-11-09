@@ -24,7 +24,7 @@ export function AppProvider({ children }) {
   const [live, setLive] = useState([]);
   const [here, setHere] = useState(null);
   const [toast, setToast] = useState(null);
-  const [lang, setLangState] = useState('sv');
+  const [lang, setLangState] = useState('en');
   const pendingName = useRef('');
   const toastTimer = useRef(null);
   const hereRef = useRef(null);
@@ -154,6 +154,22 @@ export function AppProvider({ children }) {
     return ref.id;
   }, [user, posNow, updLead]);
 
+  const setMeeting = useCallback((lead, ts) => {
+    const h = { t: Date.now(), rep: user.uid, type: 'appt', meeting: ts || null, ...posNow() };
+    setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, meeting: ts || null, hist: [...(l.hist || []), h] } : l)));
+    setDoc(doc(db, 'leads', lead.id), { meeting: ts || null, hist: arrayUnion(h), updated: Date.now() }, { merge: true }).catch(() => {});
+  }, [user, posNow]);
+  const editNote = useCallback((lead, n, text) => {
+    const notes = (lead.notes || []).map((x) => (x.t === n.t && x.text === n.text ? { ...x, text } : x));
+    setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, notes } : l)));
+    setDoc(doc(db, 'leads', lead.id), { notes, updated: Date.now() }, { merge: true }).catch(() => {});
+  }, []);
+  const deleteNote = useCallback((lead, n) => {
+    const notes = (lead.notes || []).filter((x) => !(x.t === n.t && x.text === n.text));
+    setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, notes } : l)));
+    setDoc(doc(db, 'leads', lead.id), { notes, updated: Date.now() }, { merge: true }).catch(() => {});
+  }, []);
+
   const deleteLead = useCallback((id) => { setLeads((ls) => ls.filter((l) => l.id !== id)); return deleteDoc(doc(db, 'leads', id)).catch(() => {}); }, []);
   const assignLead = useCallback((lead, to) => {
     const h = { t: Date.now(), rep: user.uid, type: 'assign', to, ...posNow() };
@@ -166,7 +182,7 @@ export function AppProvider({ children }) {
   const value = {
     phase, user, me, users, team, leads, areas, settings, live, here, S, isChef, lang,
     rep, areaOf, leadById, posNow, toast, showToast, setToast, changeLang, pendingName,
-    updLead, setStatus, addNote, newLeadAt, deleteLead, assignLead, saveUser,
+    updLead, setStatus, addNote, setMeeting, editNote, deleteNote, newLeadAt, deleteLead, assignLead, saveUser,
     logout: () => signOut(auth),
     todayStr,
   };
