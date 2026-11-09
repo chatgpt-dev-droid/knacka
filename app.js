@@ -1020,7 +1020,7 @@ const COLS={
   phone:["phone","mobile","mobil","telefon","cell","tel"],email:["email","e-mail","e-post","mail"],
   street:["street address","address 1","address1","address","adress","street","gata","gatuadress"],num:["house number","street number","husnummer","nummer"],
   zip:["zip","postal","postnummer","postcode"],city:["city","ort","stad","postort"],
-  lat:["latitude","lat"],lng:["longitude","lng","lon","long"],status:["status","disposition","lead status"],
+  lat:["latitude","lat"],lng:["longitude","lng","lon","long"],kstatus:["knacka status"],status:["status","disposition","lead status"],meeting:["appointment","möte","meeting"],
   note:["notes","note","anteckning","anteckningar","comments","kommentar"],owner:["owner","assigned","rep","user","säljare","saljare","created by"],
   date:["last visit","updated","modified","date","created","datum"]};
 function mapCols(head){
@@ -1053,11 +1053,11 @@ function readImport(file){
       let {street,num}=splitAddr(g(r,"street"));if(g(r,"num"))num=g(r,"num");
       const key=(street+"|"+num).toLowerCase();if(street&&exist.has(key)){dup++;return}exist.add(key);
       let first=g(r,"first"),last=g(r,"last");if(!first&&!last&&g(r,"name")){const p=g(r,"name").split(/\s+/);first=p.shift()||"";last=p.join(" ")}
-      const lat=parseFloat(g(r,"lat").replace(",",".")),lng=parseFloat(g(r,"lng").replace(",","."));
+      let lat=parseFloat(g(r,"lat").replace(",",".")),lng=parseFloat(g(r,"lng").replace(",","."));if(!(lat>54&&lat<70&&lng>10&&lng<25)){lat=NaN;lng=NaN}
       const ow=g(r,"owner").toLowerCase();const owner=(team().find(u=>ow&&(u.email.toLowerCase()===ow||ow.includes((u.name||"").toLowerCase().split(" ")[0])))||{}).id||S.uid;
-      const dt=Date.parse(g(r,"date"));
+      const dt=Date.parse(g(r,"date"));const mt=Date.parse(g(r,"meeting"));const ks=g(r,"kstatus");
       items.push({first,last,phone:g(r,"phone"),email:g(r,"email"),street,num,zip:g(r,"zip"),city:g(r,"city"),
-        lat:isFinite(lat)?lat:null,lng:isFinite(lng)?lng:null,status:mapStatus(g(r,"status")),statusRaw:g(r,"status"),note:g(r,"note"),owner,t:isFinite(dt)?dt:Date.now()});
+        lat:isFinite(lat)?lat:null,lng:isFinite(lng)?lng:null,status:ks||mapStatus(g(r,"status")),statusRaw:ks?stLabel(ks):g(r,"status"),note:g(r,"note"),owner,t:isFinite(dt)?dt:Date.now(),meeting:isFinite(mt)?mt:null});
     });
     importSheet(head,m,items,dup,rows.length-1);
   };
@@ -1085,17 +1085,21 @@ async function geocode(i){
 }
 async function runImport(items){
   const go=$("impGo"),pr=$("impProg");go.disabled=true;go.textContent=t("impBusy");pr.hidden=false;
-  let failed=0;const need=items.filter(i=>i.lat==null);
-  for(let n=0;n<need.length;n++){pr.textContent=`${t("impGeo")}: ${n+1} / ${need.length}`;const p=await geocode(need[n]);if(p){need[n].lat=p[0];need[n].lng=p[1]}else failed++;await new Promise(r=>setTimeout(r,1100))}
-  const ok=items.filter(i=>i.lat!=null);let done=0;
-  for(let s0=0;s0<ok.length;s0+=400){
-    const b=db.batch();
-    ok.slice(s0,s0+400).forEach(i=>{const ref=db.collection("leads").doc();
-      const doc={lat:i.lat,lng:i.lng,street:i.street,num:i.num,first:i.first,last:i.last,phone:i.phone,email:i.email,note:"",status:i.status,revisit:isRevisitSt(i.status)?dstr(new Date(Date.now()+7*DAY)):null,meeting:null,owner:i.owner,created:i.t,updated:Date.now(),
-        hist:i.status==="ny"?[]:[{t:i.t,rep:i.owner,s:i.status}],notes:i.note?[{t:i.t,rep:i.owner,text:i.note}]:[],source:"salesrabbit"};
-      b.set(ref,doc)});
-    try{await b.commit()}catch(e){err(e);break}
-    done=Math.min(ok.length,s0+400);pr.textContent=`${t("impBusy")} ${done} / ${ok.length}`;
+  const toDoc=i=>({lat:i.lat,lng:i.lng,street:i.street,num:i.num,zip:i.zip||"",city:i.city||"",first:i.first,last:i.last,phone:i.phone,email:i.email,note:"",status:i.status,
+    revisit:isRevisitSt(i.status)?dstr(new Date(Date.now()+7*DAY)):null,meeting:i.meeting||null,owner:i.owner,created:i.t,updated:Date.now(),
+    hist:i.status==="ny"?[]:[{t:i.t,rep:i.owner,s:i.status}],notes:i.note?[{t:i.t,rep:i.owner,text:i.note}]:[],source:"salesrabbit"});
+  const write=async list=>{for(let s0=0;s0<list.length;s0+=400){const b=db.batch();list.slice(s0,s0+400).forEach(i=>b.set(db.collection("leads").doc(),toDoc(i)));await b.commit()}};
+  let done=0,failed=0;
+  // 1) everything that already has a position goes in right away
+  const ok=items.filter(i=>i.lat!=null),need=items.filter(i=>i.lat==null);
+  try{for(let s0=0;s0<ok.length;s0+=400){await write(ok.slice(s0,s0+400));done=Math.min(ok.length,s0+400);pr.textContent=`${t("impBusy")} ${done} / ${items.length}`}}catch(e){err(e);return}
+  // 2) the rest is looked up on the map and saved 20 at a time, so nothing is lost if the page closes
+  let buf=[];
+  for(let n=0;n<need.length;n++){
+    const p=await geocode(need[n]);if(p){need[n].lat=p[0];need[n].lng=p[1];buf.push(need[n])}else failed++;
+    if(buf.length>=20||n===need.length-1){try{await write(buf)}catch(e){err(e);return}done+=buf.length;buf=[]}
+    pr.textContent=`${t("impGeo")}: ${n+1} / ${need.length} · ${t("impBusy")} ${done}`;
+    await new Promise(r=>setTimeout(r,1100));
   }
   pr.textContent=`${t("impDone")} ${done}.`+(failed?` ${failed} ${t("impFail")}.`:"");go.textContent=t("done");go.disabled=false;go.onclick=closeSheet;
 }
