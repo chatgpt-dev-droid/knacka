@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
-import { useApp } from '../../lib/store';
-import { t } from '../../lib/i18n';
-import { C, R } from '../../lib/theme';
-import { initials } from '../../lib/util';
-import { isDayRunning, startDay, endDay, openAppSettings } from '../../lib/tracking';
-import { Btn, Chip, Field, H3, Sub } from '../../components/ui';
+import { useApp } from '../lib/store';
+import { t } from '../lib/i18n';
+import { C, R } from '../lib/theme';
+import { initials } from '../lib/util';
+import { isDayRunning, startDay, endDay, openAppSettings } from '../lib/tracking';
+import { Btn, Chip, Field, H3, Sub } from '../components/ui';
 
-export default function More() {
+export default function More({ embedded, header }) {
   const ins = useSafeAreaInsets();
   const { me, user, users, isChef, saveUser, logout, lang, changeLang, showToast } = useApp();
   const [phone, setPhone] = useState(me?.phone || '');
@@ -19,8 +19,8 @@ export default function More() {
   const others = users.filter((u) => u.id !== user.uid && (u.active || u.off));
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ paddingTop: ins.top + 8, padding: 16, gap: 14, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      <Text style={st.h1}>{t('moreTitle')}</Text>
+    <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ paddingTop: embedded ? 8 : ins.top + 8, padding: 16, gap: 14, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      {header || (embedded ? null : <Text style={st.h1}>{t('moreTitle')}</Text>)}
       <View style={[st.card, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
         <View style={st.av}><Text style={st.avT}>{initials(me?.name)}</Text></View>
         <View style={{ flex: 1 }}><H3>{me?.name}</H3><Sub>{me?.email}  ·  {t('role_' + (me?.role || 'saljare'))}</Sub></View>

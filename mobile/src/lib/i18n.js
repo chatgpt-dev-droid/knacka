@@ -1,4 +1,10 @@
 const sv = {
+  tHome: 'Hem', tMessages: 'Meddelanden', tTools: 'Verktyg', tList: 'Lista', tStreet: 'Gata', settings: 'Inställningar',
+  filter: 'Filter', reset: 'Återställ', apply: 'Använd', myLeads: 'Mina leads', othersLeads: 'Andras leads', areasL: 'Områden', userLocations: 'Säljarnas position',
+  note: 'Anteckning', add: 'Lägg till', notesCaps: 'ANTECKNINGAR', appointment: 'Möte', even: 'Jämna', odd: 'Udda', noStreet: 'Ingen gata i närheten',
+  allExNotes: 'Allt (utom anteckningar)', allInclNotes: 'Allt + anteckningar', noConvos: 'Inga konversationer än', noGps: 'Ingen GPS-position än',
+  goodMorning: 'God morgon', goodDay: 'God dag', goodEvening: 'God kväll', myAppointments: 'Mina möten',
+  quote: 'Varje dörr är en ny chans. Le, var nyfiken och kom ihåg namnen.',
   tMap: 'Karta', tLeads: 'Leads', tCal: 'Kalender', tComp: 'Tävling', tMore: 'Mer',
   login: 'Logga in', register: 'Skapa konto', yourName: 'Ditt namn', email: 'E-post', password: 'Lösenord', pwHint: 'Minst 6 tecken', forgot: 'Glömt lösenordet?',
   resetSent: 'Vi har skickat ett mejl för att välja nytt lösenord.', needEmail: 'Skriv din e-post först.', logout: 'Logga ut', loading: 'Laddar…',
@@ -29,6 +35,7 @@ const sv = {
 };
 const en = {
   ...sv,
+  tHome: 'Home', tMessages: 'Messages', tTools: 'Tools', tList: 'List', tStreet: 'Street', settings: 'Settings', filter: 'Filter', reset: 'Reset', apply: 'Apply', myLeads: 'My Leads', othersLeads: "Others' Leads", areasL: 'Areas', userLocations: 'User Locations', note: 'Note', add: 'Add', notesCaps: 'NOTES', appointment: 'Appointment', even: 'Even', odd: 'Odd', goodMorning: 'Good morning', goodDay: 'Good afternoon', goodEvening: 'Good evening', myAppointments: 'My Appointments',
   tMap: 'Map', tLeads: 'Leads', tCal: 'Calendar', tComp: 'Compete', tMore: 'More', login: 'Log in', register: 'Create account', yourName: 'Your name', email: 'Email', password: 'Password', logout: 'Log out',
   details: 'Details', bookMeeting: 'Book meeting', setRevisit: 'Revisit', meeting: 'Appointment', revisit: 'Revisit', notes: 'Notes', addNotePh: 'Write a note…', call: 'Call', nav: 'Navigate', assignedTo: 'Assigned to', activity: 'Activity',
   startDay: 'Start day', endDay: 'End day', dayOn: 'Workday running – your route is saved', dayOff: 'Start the day to save your route', undo: 'Undo', saved: 'Saved', cancel: 'Cancel', done: 'Done',

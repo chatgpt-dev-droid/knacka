@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApp } from '../../lib/store';
-import { t } from '../../lib/i18n';
-import { C, R } from '../../lib/theme';
-import { initials } from '../../lib/util';
-import { Chip } from '../../components/ui';
+import { useApp } from '../lib/store';
+import { t } from '../lib/i18n';
+import { C, R } from '../lib/theme';
+import { initials } from '../lib/util';
+import { Chip } from '../components/ui';
 
 function since(p) {
   const d = new Date(); d.setHours(0, 0, 0, 0);
@@ -14,7 +14,7 @@ function since(p) {
   return d.getTime();
 }
 
-export default function Compete() {
+export default function Compete({ embedded, header }) {
   const ins = useSafeAreaInsets();
   const { leads, team, S, user } = useApp();
   const [p, setP] = useState('day');
@@ -32,8 +32,8 @@ export default function Compete() {
   const max = Math.max(1, ...rows.map((r) => r[m]));
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ paddingTop: ins.top + 8, padding: 16, gap: 12 }}>
-      <Text style={st.h1}>{t('compTitle')}</Text>
+    <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ paddingTop: embedded ? 8 : ins.top + 8, padding: 16, gap: 12 }}>
+      {header || (embedded ? null : <Text style={st.h1}>{t('compTitle')}</Text>)}
       <View style={st.seg}>
         {[['day', t('day')], ['week', t('week')], ['month', t('month')]].map(([k, l]) => <Text key={k} onPress={() => setP(k)} style={[st.segB, p === k && st.segOn]}>{l}</Text>)}
       </View>

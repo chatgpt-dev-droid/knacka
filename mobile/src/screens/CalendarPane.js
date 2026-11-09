@@ -3,15 +3,15 @@ import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-nati
 import { router } from 'expo-router';
 import * as SMS from 'expo-sms';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApp } from '../../lib/store';
-import { t, loc } from '../../lib/i18n';
-import { C, R } from '../../lib/theme';
-import { addr, nameOf, dstr, todayStr, ftime, fdate, DAY } from '../../lib/util';
-import { openRoute, orderStops } from '../../lib/links';
-import StatusDot from '../../components/StatusDot';
-import { Btn, H3, Sub } from '../../components/ui';
+import { useApp } from '../lib/store';
+import { t, loc } from '../lib/i18n';
+import { C, R } from '../lib/theme';
+import { addr, nameOf, dstr, todayStr, ftime, fdate, DAY } from '../lib/util';
+import { openRoute, orderStops } from '../lib/links';
+import StatusDot from '../components/StatusDot';
+import { Btn, H3, Sub } from '../components/ui';
 
-export default function Calendar() {
+export default function Calendar({ embedded, header }) {
   const ins = useSafeAreaInsets();
   const { leads, S, user, here, me, settings, updLead, showToast } = useApp();
   const today = todayStr();
@@ -56,8 +56,8 @@ export default function Calendar() {
   };
 
   return (
-    <ScrollView style={st.wrap} contentContainerStyle={{ paddingTop: ins.top + 8, paddingBottom: 30, gap: 14 }}>
-      <Text style={st.h1}>{t('calTitle')}</Text>
+    <ScrollView style={st.wrap} contentContainerStyle={{ paddingTop: embedded ? 8 : ins.top + 8, paddingBottom: 30, gap: 14 }}>
+      {header || (embedded ? null : <Text style={st.h1}>{t('calTitle')}</Text>)}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 16 }} contentOffset={{ x: 3 * 60, y: 0 }}>
         {days.map((d) => {
           const dt = new Date(d + 'T12:00:00'); const on = d === day; const n = count(d);
