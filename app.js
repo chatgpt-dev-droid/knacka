@@ -102,6 +102,9 @@ const AI_INFO_DEFAULT='Fiskaren.nu levererar fisk och skaldjur hem till dörren 
 const CHEF_EMAILS=["hej@fiskaren.nu","karen@fiskaren.nu"];
 /* ---------- status system (editable by chef) ---------- */
 const ICON_PATHS={
+ question:'<path d="M9.2 9.2a2.9 2.9 0 1 1 4.2 2.6c-.9.5-1.4 1.1-1.4 2.1v.6"/><path d="M12 18.3v.1"/>',
+ send:'<path d="M20.5 3.5 3.5 11l6.5 2.5 2.5 6.5z"/><path d="m10 13.5 4-4"/>',
+ book:'<path d="M5 4.5h5.5A2.5 2.5 0 0 1 13 7v12.5a2 2 0 0 0-2-2H5z"/><path d="M19 4.5h-3.5A2.5 2.5 0 0 0 13 7v12.5a2 2 0 0 1 2-2h4z"/>',
  crown:'<path d="M3.5 17.5h17"/><path d="M4.5 7.5 8.5 11 12 5l3.5 6 4-3.5-1.6 9.5H6.1z"/>',
  star:'<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
  bag:'<path d="M9.2 4.5h5.6l-1.4 2.6h-2.8z"/><path d="M8.6 7.1h6.8c2.6 2.2 4.1 5 4.1 7.8 0 2.9-2.4 4.6-7.5 4.6s-7.5-1.7-7.5-4.6c0-2.8 1.5-5.6 4.1-7.8z"/><path d="M13.8 11.3c-.4-.6-1-.9-1.8-.9-1.1 0-1.8.6-1.8 1.4 0 1.9 3.7.9 3.7 2.8 0 .8-.8 1.4-1.9 1.4-.8 0-1.5-.3-1.9-.9M12 9.6v.8M12 16v.8"/>',
@@ -133,20 +136,25 @@ const ICON_PATHS={
  pin:'<path d="M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
  trash:'<path d="M5 7h14M9.5 7V4.5h5V7M7 7l1 12.5h8L17 7"/>',
  locoff:'<path d="M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11z"/><path d="M12 7.5v3.5"/><path d="M12 13.6v.1"/>'};
-const ICON_NAMES=["crown","star","bag","check","home","refresh","alert","lock","x","minus","clock","door","sms","heart","fish","phone"];
+const ICON_NAMES=["question","send","book","crown","star","bag","check","home","refresh","alert","lock","x","minus","clock","door","sms","heart","fish","phone"];
 function svgI(name,size,sw){return `<svg width="${size||22}" height="${size||22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||2.2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name]||""}</svg>`}
 // flag: sale | lead | revisit | closed | none
 const DEFAULT_STATUSES=[
- {k:"abo",label:"ABO",color:"#1d7a2a",icon:"crown",flag:"sale"},
- {k:"sk",label:"sk",color:"#e0399a",icon:"star",flag:"lead"},
- {k:"sald",label:"Såld",color:"#6cc95a",icon:"bag",flag:"sale"},
- {k:"k",label:"K",color:"#11a8a6",icon:"check",flag:"none"},
- {k:"p",label:"P",color:"#3fc4bc",icon:"home",flag:"none"},
- {k:"kt",label:"KT",color:"#6cc95a",icon:"refresh",flag:"revisit"},
- {k:"lead",label:"Lead",color:"#11a8a6",icon:"alert",flag:"lead"},
- {k:"kih",label:"KIH",color:"#e9a800",icon:"lock",flag:"closed"},
- {k:"nh",label:"Inte hemma",color:"#8d9aa6",icon:"door",flag:"nothome"},
- {k:"smss",label:"SMS skickat",color:"#4f7cff",icon:"sms",flag:"smssent"}];
+ {k:"abo",label:"Abonemag",color:"#237804",icon:"crown",flag:"sale"},
+ {k:"sk",label:"Stjärnkund",color:"#eb2f96",icon:"star",flag:"sale"},
+ {k:"sald",label:"Såld",color:"#95de64",icon:"bag",flag:"sale"},
+ {k:"k",label:"Kund",color:"#13c2c2",icon:"check",flag:"sale"},
+ {k:"p",label:"Pensioner",color:"#5cdbd3",icon:"home",flag:"none"},
+ {k:"kt",label:"Kom tillbaka",color:"#95de64",icon:"refresh",flag:"revisit"},
+ {k:"lead",label:"Lead",color:"#13c2c2",icon:"alert",flag:"lead"},
+ {k:"kih",label:"Kunden är inte hemma",color:"#ffcb00",icon:"lock",flag:"nothome"},
+ {k:"smss",label:"SMS",color:"#722ed1",icon:"send",flag:"smssent"},
+ {k:"nh",label:"Inte hemma",color:"#fa8c16",icon:"question",flag:"nothome"},
+ {k:"avsl",label:"Avslutat abonemaget",color:"#a8071a",icon:"refresh",flag:"closed"},
+ {k:"nej",label:"Inte intresserad",color:"#f5222d",icon:"x",flag:"closed"},
+ {k:"other",label:"Other",color:"#722ed1",icon:"minus",flag:"none"},
+ {k:"bro",label:"Broschyr",color:"#ffcb00",icon:"book",flag:"none"},
+ {k:"brok",label:"Broschyr Kund",color:"#5cdbd3",icon:"book",flag:"sale"}];
 const LEGACY_STATUSES=[
  {k:"borta",label:"Inte hemma",color:"#8d9aa6",icon:"minus",flag:"nothome"},{k:"nej",label:"Nej tack",color:"#d64541",icon:"x",flag:"closed"},
  {k:"igen",label:"Kom tillbaka",color:"#e39b14",icon:"refresh",flag:"revisit"},{k:"int",label:"Intresserad",color:"#7b5bd6",icon:"star",flag:"lead"},

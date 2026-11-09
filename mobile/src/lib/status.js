@@ -1,16 +1,20 @@
 // Same status model as the web app (settings/main.statuses). flag: sale | lead | revisit | nothome | smssent | closed | none
 export const DEFAULT_STATUSES = [
-  { k: 'abo', label: 'ABO', color: '#1d7a2a', icon: 'crown', flag: 'sale' },
-  { k: 'sk', label: 'sk', color: '#e0399a', icon: 'star', flag: 'lead' },
-  { k: 'sald', label: 'Såld', color: '#6cc95a', icon: 'bag', flag: 'sale' },
-  { k: 'k', label: 'K', color: '#11a8a6', icon: 'check', flag: 'none' },
-  { k: 'p', label: 'P', color: '#3fc4bc', icon: 'home', flag: 'none' },
-  { k: 'kt', label: 'KT', color: '#6cc95a', icon: 'refresh', flag: 'revisit' },
-  { k: 'lead', label: 'Lead', color: '#11a8a6', icon: 'alert', flag: 'lead' },
-  { k: 'kih', label: 'KIH', color: '#e9a800', icon: 'lock', flag: 'closed' },
-  { k: 'nh', label: 'Inte hemma', color: '#8d9aa6', icon: 'door', flag: 'nothome' },
-  { k: 'smss', label: 'SMS skickat', color: '#4f7cff', icon: 'sms', flag: 'smssent' },
-];
+ { k: "abo", label: "Abonemag", color: "#237804", icon: "crown", flag: "sale" },
+ { k: "sk", label: "Stjärnkund", color: "#eb2f96", icon: "star", flag: "sale" },
+ { k: "sald", label: "Såld", color: "#95de64", icon: "bag", flag: "sale" },
+ { k: "k", label: "Kund", color: "#13c2c2", icon: "check", flag: "sale" },
+ { k: "p", label: "Pensioner", color: "#5cdbd3", icon: "home", flag: "none" },
+ { k: "kt", label: "Kom tillbaka", color: "#95de64", icon: "refresh", flag: "revisit" },
+ { k: "lead", label: "Lead", color: "#13c2c2", icon: "alert", flag: "lead" },
+ { k: "kih", label: "Kunden är inte hemma", color: "#ffcb00", icon: "lock", flag: "nothome" },
+ { k: "smss", label: "SMS", color: "#722ed1", icon: "send", flag: "smssent" },
+ { k: "nh", label: "Inte hemma", color: "#fa8c16", icon: "question", flag: "nothome" },
+ { k: "avsl", label: "Avslutat abonemaget", color: "#a8071a", icon: "refresh", flag: "closed" },
+ { k: "nej", label: "Inte intresserad", color: "#f5222d", icon: "x", flag: "closed" },
+ { k: "other", label: "Other", color: "#722ed1", icon: "minus", flag: "none" },
+ { k: "bro", label: "Broschyr", color: "#ffcb00", icon: "book", flag: "none" },
+ { k: "brok", label: "Broschyr Kund", color: "#5cdbd3", icon: "book", flag: "sale" }];
 export const LEGACY = [
   { k: 'borta', label: 'Inte hemma', color: '#8d9aa6', icon: 'minus', flag: 'nothome' }, { k: 'nej', label: 'Nej tack', color: '#d64541', icon: 'x', flag: 'closed' },
   { k: 'igen', label: 'Kom tillbaka', color: '#e39b14', icon: 'refresh', flag: 'revisit' }, { k: 'int', label: 'Intresserad', color: '#7b5bd6', icon: 'star', flag: 'lead' },
