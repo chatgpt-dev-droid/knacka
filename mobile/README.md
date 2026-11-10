@@ -11,3 +11,4 @@ Köra: `npx expo start` (Expo Go räcker för allt utom bakgrunds-GPS).
 Bakgrunds-GPS kräver en development build: `npx eas-cli@latest build --profile development -p ios`.
 Android-kartan behöver en Google Maps API-nyckel i app.json (`android.config.googleMaps.apiKey`).
 
+
