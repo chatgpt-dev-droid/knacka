@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Alert, StyleSheet, Switch, KeyboardAvoidingView, Platform } from 'react-native';
+import * as SMS from 'expo-sms';
 import { collection, doc, writeBatch, arrayUnion, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useApp } from '../lib/store';
 import { t } from '../lib/i18n';
 import { C, R, shadow } from '../lib/theme';
 import { orderStops, openRoute } from '../lib/links';
+import { addr } from '../lib/util';
 import Icon from './Icon';
 import StatusDot from './StatusDot';
 
@@ -13,7 +15,9 @@ const COLORS = ['#141414', '#5b3cc4', '#1d6ff2', '#d9660b', '#f5c400', '#4cd137'
 
 // "Lasso Options": what to do with the leads inside the drawn shape
 export default function LassoSheet({ leads, poly, onClose, onRoute }) {
-  const { S, user, team, isChef, here, showToast } = useApp();
+  const { S, user, team, isChef, here, showToast, settings, me, updLead } = useApp();
+  const [msg, setMsg] = useState(null);
+  const [setSt, setSetSt] = useState(false);
   const [off, setOff] = useState([]); // statuses switched off
   const [view, setView] = useState('main'); // main | area | assign | status | areaAssign
   const [title, setTitle] = useState('');
@@ -50,6 +54,26 @@ export default function LassoSheet({ leads, poly, onClose, onRoute }) {
     const stops = orderStops(chosen.filter((l) => typeof l.lat === 'number'), here);
     onRoute(stops);
     Alert.alert(t('routeMade'), `${stops.length} ${t('routeStops')}`, [{ text: t('done') }, { text: t('openMaps'), onPress: () => openRoute(stops.slice(0, 10), here) }]);
+  };
+  // one draft per customer in the phone's Messages app, each with their own name
+  const withPhone = chosen.filter((l) => l.phone && !l.smsOptOut);
+  const tmpl = msg ?? (settings.tmplNH || t('tmplNHDefault'));
+  const fill = (l) => tmpl.replace(/\{namn\}|\{name\}/g, l.first || '').replace(/\{adress\}/g, addr(l)).replace(/\{säljare\}/g, me?.name || '').replace(/\{telefon\}/g, me?.phone || '').replace(/Hej\s+!/, 'Hej!').replace(/Hi\s+!/, 'Hi!');
+  const sendSms = async () => {
+    if (!withPhone.length || busy) return;
+    if (!(await SMS.isAvailableAsync())) return showToast(t('err_gen'));
+    setBusy(true); let sent = 0; const smsKey = S.byFlag('smssent');
+    for (const l of withPhone) {
+      const body = fill(l);
+      const r = await SMS.sendSMSAsync([l.phone], body).catch(() => ({ result: 'cancelled' }));
+      if (r.result === 'cancelled') break;
+      sent++;
+      const patch = { smsSent: Date.now(), sms: [...(l.sms || []), { t: Date.now(), dir: 'out', by: user.uid, text: body }] };
+      if (setSt && smsKey) patch.status = smsKey;
+      updLead(l.id, patch);
+    }
+    setBusy(false);
+    if (sent) { showToast(`${sent} / ${withPhone.length} SMS ✓`); if (sent === withPhone.length) onClose(); }
   };
   const createArea = async () => {
     try {
@@ -124,6 +148,16 @@ export default function LassoSheet({ leads, poly, onClose, onRoute }) {
               <View style={st.sub}><Pressable hitSlop={10} onPress={() => { setView('main'); setPick(null); }}><Text style={[st.red, { fontWeight: '800' }]}>{t('cancel')}</Text></Pressable><Text /><Pressable hitSlop={10} onPress={assign} disabled={!pick}><Text style={[st.red, { fontWeight: '800' }, !pick && { opacity: 0.4 }]}>{t('done')}</Text></Pressable></View>
               {UserList({ value: pick, onPick: setPick })}
             </>
+          ) : view === 'sms' ? (
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+              <View style={st.sub}><Pressable hitSlop={10} onPress={() => setView('main')}><Icon name="chevL" size={22} color={C.red} /></Pressable><Text style={st.subT}>{t('sendSms')}</Text><Pressable hitSlop={10} onPress={sendSms} disabled={!withPhone.length || busy}><Text style={[st.red, { fontWeight: '800' }, (!withPhone.length || busy) && { opacity: 0.4 }]}>{t('start')}</Text></Pressable></View>
+              <View style={{ paddingHorizontal: 16, gap: 8 }}>
+                <Text style={st.uR}>{t('smsInfo').replace('{n}', withPhone.length).replace('{m}', chosen.length - withPhone.length)}</Text>
+                <TextInput value={tmpl} onChangeText={setMsg} multiline style={st.msg} />
+                <Text style={st.uR}>{t('smsNameHint')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={st.uN}>{t('smsSetStatus')}</Text><Switch value={setSt} onValueChange={setSetSt} trackColor={{ true: C.red }} /></View>
+              </View>
+            </KeyboardAvoidingView>
           ) : view === 'status' ? (
             <>
               <View style={st.sub}><Pressable hitSlop={10} onPress={() => { setView('main'); setPick(null); }}><Icon name="chevL" size={22} color={C.red} /></Pressable><Text style={st.subT}>{t('changeStatus')}</Text><Pressable hitSlop={10} onPress={change} disabled={!pick}><Text style={[st.red, !pick && { opacity: 0.4 }]}>{t('update')}</Text></Pressable></View>
@@ -138,13 +172,14 @@ export default function LassoSheet({ leads, poly, onClose, onRoute }) {
               </ScrollView>
             </>
           ) : (
-            <View style={st.acts}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.acts}>
               <Act icon="share" label={t('createArea')} onPress={() => setView('area')} />
               <Act icon="users" label={t('assignLeads')} on={!!chosen.length} onPress={() => { setPick(null); setView('assign'); }} />
               <Act icon="star" label={t('changeStatus2')} on={!!chosen.length} onPress={() => { setPick(null); setView('status'); }} />
+              <Act icon="chat" label={t('sendSms2')} on={!!withPhone.length} onPress={() => setView('sms')} />
               <Act icon="route" label={t('createRoute')} on={!!chosen.length} onPress={route} />
               <Act icon="trash" label={t('deleteLeads')} on={!!chosen.length} onPress={del} />
-            </View>
+            </ScrollView>
           )}
         </>
       )}
@@ -156,7 +191,8 @@ const st = StyleSheet.create({
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: C.surface, borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, paddingBottom: 14 },
   title: { fontSize: 16, fontWeight: '800', color: C.ink }, count: { fontSize: 13, color: C.ink, marginTop: 6 },
   ring: { borderWidth: 2.5, borderColor: 'transparent', borderRadius: 22, padding: 1.5 }, n: { fontSize: 14, fontWeight: '800', color: C.ink },
-  acts: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 6, paddingTop: 6 },
+  acts: { paddingHorizontal: 6, paddingTop: 6, gap: 2 },
+  msg: { minHeight: 90, maxHeight: 150, borderRadius: 10, backgroundColor: '#f0f0f0', padding: 10, fontSize: 15.5, color: C.ink, textAlignVertical: 'top' },
   act: { width: 68, alignItems: 'center', gap: 8 }, actI: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#efefef', alignItems: 'center', justifyContent: 'center' },
   actT: { fontSize: 13, color: C.ink, textAlign: 'center', lineHeight: 18 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 }, headT: { fontSize: 16, fontWeight: '700', color: C.ink },
