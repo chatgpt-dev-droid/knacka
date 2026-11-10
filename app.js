@@ -1087,10 +1087,17 @@ function importSheet(head,m,items,dup,total){
   $("impGo").onclick=()=>runImport(items);
 }
 async function geocode(i){
-  const q=[(i.street+" "+i.num).trim(),[i.zip,i.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-  try{const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=se&q="+encodeURIComponent(q));const j=await r.json();if(j&&j[0])return [parseFloat(j[0].lat),parseFloat(j[0].lon)]}catch(e){}
+  // several attempts: exact address with zip, then with town, then street only in the town
+  const sn=(i.street+" "+i.num).trim(),city=/län$|county$/i.test(i.city||"")?"":(i.city||"");
+  const tries=[[sn,[i.zip,city].filter(Boolean).join(" ")],[sn,city],[sn,i.zip],[sn,"Stockholms län"],[i.street,city||i.zip]].map(x=>x.filter(Boolean).join(", "));
+  const seen=new Set();
+  for(const q of tries){if(!q||seen.has(q))continue;seen.add(q);
+    try{const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=se&q="+encodeURIComponent(q));const j=await r.json();
+      if(j&&j[0]){const la=parseFloat(j[0].lat),lo=parseFloat(j[0].lon);if(la>58.5&&la<60.5&&lo>16.5&&lo<19.8)return [la,lo]}}catch(e){}
+    await new Promise(r=>setTimeout(r,1100));}
   return null;
 }
+
 async function runImport(items){
   const go=$("impGo"),pr=$("impProg");go.disabled=true;go.textContent=t("impBusy");pr.hidden=false;
   const toDoc=i=>({lat:i.lat,lng:i.lng,street:i.street,num:i.num,zip:i.zip||"",city:i.city||"",first:i.first,last:i.last,phone:i.phone,email:i.email,note:"",status:i.status,
@@ -1107,7 +1114,7 @@ async function runImport(items){
     const p=await geocode(need[n]);if(p){need[n].lat=p[0];need[n].lng=p[1];buf.push(need[n])}else failed++;
     if(buf.length>=20||n===need.length-1){try{await write(buf)}catch(e){err(e);return}done+=buf.length;buf=[]}
     pr.textContent=`${t("impGeo")}: ${n+1} / ${need.length} · ${t("impBusy")} ${done}`;
-    await new Promise(r=>setTimeout(r,1100));
+    await new Promise(r=>setTimeout(r,300));
   }
   pr.textContent=`${t("impDone")} ${done}.`+(failed?` ${failed} ${t("impFail")}.`:"");go.textContent=t("done");go.disabled=false;go.onclick=closeSheet;
 }
