@@ -15,7 +15,8 @@
           "location"
         ],
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "appleTeamId": "7Q6QVS9862"
     },
     "android": {
       "package": "nu.fiskaren.knacka",

@@ -40,12 +40,12 @@ jobs:
         env:
           EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          EXPO_APPLE_TEAM_ID: 7Q6QVS9862
           EXPO_APPLE_TEAM_TYPE: ${{ vars.APPLE_TEAM_TYPE || 'INDIVIDUAL' }}
         run: |
           printf '%s' "${{ secrets.ASC_KEY_P8 }}" > "$RUNNER_TEMP/asc.p8"
           export EXPO_ASC_API_KEY_PATH="$RUNNER_TEMP/asc.p8"
-          npx eas-cli build -p ios --profile production --non-interactive --auto-submit --no-wait
+          npx eas-cli build -p ios --profile production --non-interactive --no-wait
       - name: Build Android app
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'android'
         run: npx eas-cli build -p android --profile preview --non-interactive --no-wait
