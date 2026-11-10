@@ -20,10 +20,8 @@
     "android": {
       "package": "nu.fiskaren.knacka",
       "adaptiveIcon": {
-        "backgroundColor": "#0b6e7f",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0b6e7f"
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",

@@ -35,6 +35,17 @@ jobs:
           echo "PROJECT_ID=$PID"
           echo "EXPO_GO_LINK=exp://u.expo.dev/$PID?channel-name=main&runtime-version=exposdk:58.0.0"
           echo "QR=https://qr.expo.dev/eas-update?projectId=$PID&runtimeVersion=exposdk:58.0.0&channel=main"
-      - name: Build
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.build != 'none'
-        run: npx eas-cli build -p ${{ github.event.inputs.build }} --profile preview --non-interactive --no-wait
+      - name: Build iOS app and send to TestFlight
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'ios'
+        env:
+          EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          EXPO_APPLE_TEAM_TYPE: ${{ vars.APPLE_TEAM_TYPE || 'INDIVIDUAL' }}
+        run: |
+          printf '%s' "${{ secrets.ASC_KEY_P8 }}" > "$RUNNER_TEMP/asc.p8"
+          export EXPO_ASC_API_KEY_PATH="$RUNNER_TEMP/asc.p8"
+          npx eas-cli build -p ios --profile production --non-interactive --auto-submit --no-wait
+      - name: Build Android app
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'android'
+        run: npx eas-cli build -p android --profile preview --non-interactive --no-wait
