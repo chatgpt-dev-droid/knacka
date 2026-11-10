@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { View, Text, Pressable, TextInput, FlatList, StyleSheet, Keyboard, Alert } from 'react-native';
+import { View, Text, Pressable, TextInput, FlatList, StyleSheet, Keyboard, Alert, PanResponder } from 'react-native';
+import Svg, { Polyline as SvgLine } from 'react-native-svg';
 import MapView, { Polygon, Polyline, Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useApp } from '../lib/store';
 import { t } from '../lib/i18n';
 import { C, R, shadow } from '../lib/theme';
-import { addr, nameOf, todayStr, initials, rel } from '../lib/util';
+import { addr, nameOf, todayStr, initials, rel, inPoly } from '../lib/util';
+import LassoSheet from '../components/LassoSheet';
 import { startDay, endDay, isDayRunning, openAppSettings } from '../lib/tracking';
 import { applyFilter } from '../lib/filter';
 import Pin from '../components/Pin';
@@ -92,6 +94,37 @@ export default function MapPane({ filter, focus, placeSignal }) {
   const open = useCallback((l) => { setSel(l.id); setPlacing(false); }, []);
   const goTo = (l) => { Keyboard.dismiss(); setSearching(false); setQ(''); setSel(l.id); map.current?.animateToRegion({ latitude: l.lat, longitude: l.lng, latitudeDelta: 0.003, longitudeDelta: 0.003 }, 500); };
   const locate = () => { if (here) map.current?.animateToRegion({ latitude: here.lat, longitude: here.lng, latitudeDelta: 0.004, longitudeDelta: 0.004 }, 500); else showToast(t('noGps')); };
+  // ----- lasso: draw a shape with the finger, then act on the leads inside it -----
+  const [lasso, setLasso] = useState(false);      // drawing mode on
+  const [trail, setTrail] = useState([]);         // screen points while drawing
+  const [shape, setShape] = useState(null);       // finished polygon in map coordinates
+  const [routeLine, setRouteLine] = useState(null);
+  const trailRef = useRef([]);
+  const pan = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true, onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (e) => { trailRef.current = [{ x: e.nativeEvent.locationX, y: e.nativeEvent.locationY }]; setTrail(trailRef.current); },
+    onPanResponderMove: (e) => {
+      const p = { x: e.nativeEvent.locationX, y: e.nativeEvent.locationY }; const l = trailRef.current[trailRef.current.length - 1];
+      if (l && Math.abs(p.x - l.x) + Math.abs(p.y - l.y) < 6) return;
+      trailRef.current = [...trailRef.current, p]; setTrail(trailRef.current);
+    },
+    onPanResponderRelease: async () => {
+      const pts = trailRef.current; trailRef.current = []; setTrail([]);
+      if (pts.length < 8 || !map.current) return;
+      const step = Math.max(1, Math.floor(pts.length / 70));
+      try {
+        const coords = await Promise.all(pts.filter((_, i) => i % step === 0).map((p) => map.current.coordinateForPoint(p)));
+        setShape(coords); setLasso(false); setSel(null);
+      } catch (err) { showToast(t('err_gen')); }
+    },
+  }), [showToast]);
+  const inShape = useMemo(() => {
+    if (!shape) return [];
+    const poly = shape.map((c) => [c.latitude, c.longitude]);
+    return shown.filter((l) => inPoly(l.lat, l.lng, poly));
+  }, [shape, shown]);
+  const clearLasso = () => { setLasso(false); setShape(null); setTrail([]); setRouteLine(null); };
+
   const confirmPlace = async () => { if (!region) return; setPlacing(false); const id = await newLeadAt(region.latitude, region.longitude); setSel(id); };
 
   const toggleDay = async () => {
@@ -118,6 +151,8 @@ export default function MapPane({ filter, focus, placeSignal }) {
         {(filter.team ? tracks : tracks.filter((x) => x.uid === user.uid)).filter((x) => (x.points || []).length > 1).map((x) => (
           <Polyline key={x.uid} coordinates={x.points.map((p) => ({ latitude: p.lat, longitude: p.lng }))} strokeColor={colorFor(x.uid)} strokeWidth={4} lineCap="round" lineJoin="round" />
         ))}
+        {shape ? <Polygon coordinates={shape} strokeColor="#141414" strokeWidth={3} lineDashPattern={[10, 7]} fillColor="rgba(20,20,20,0.45)" tappable={false} /> : null}
+        {routeLine ? <Polyline coordinates={routeLine} strokeColor={C.red} strokeWidth={4} lineCap="round" lineJoin="round" /> : null}
         {clusters ? clusters.map((c) => (
           <Marker key={'c' + c.id + c.n} coordinate={{ latitude: c.la, longitude: c.lo }} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}
             onPress={() => map.current?.animateToRegion({ latitude: c.la, longitude: c.lo, latitudeDelta: region.latitudeDelta / 3.5, longitudeDelta: region.longitudeDelta / 3.5 }, 400)}>
@@ -135,7 +170,10 @@ export default function MapPane({ filter, focus, placeSignal }) {
       <View style={[st.col, { left: 10 }]}>
         <Tool name="search" label={t('searchPh')} active={searching} onPress={() => setSearching((v) => !v)} />
         <Tool name="route" label={day ? t('endDay') : t('startDay')} active={day} onPress={toggleDay} />
-        <Tool name="hand" label={t('placeHere')} active={placing} onPress={() => { setSel(null); setPlacing((v) => !v); }} />
+        <View>
+          <Tool name="hand" label="Lasso" active={lasso || !!shape} onPress={() => { if (lasso || shape) clearLasso(); else { setSel(null); setPlacing(false); setRouteLine(null); setLasso(true); showToast(t('lassoHint')); } }} />
+          {lasso || shape || routeLine ? <Pressable onPress={clearLasso} hitSlop={8} style={st.lassoX} accessibilityLabel={t('cancel')}><Icon name="x" size={14} color="#fff" width={3} /></Pressable> : null}
+        </View>
       </View>
       {/* right column */}
       <View style={[st.col, { right: 10 }]}>
@@ -163,7 +201,17 @@ export default function MapPane({ filter, focus, placeSignal }) {
         </View>
       ) : null}
 
-      {day && !lead && !placing ? <View style={[st.dayPill, shadow]}><View style={st.dayDot} /><Text style={st.dayT}>{t('dayOn')}</Text></View> : null}
+      {day && !lead && !placing && !shape && !lasso ? <View style={[st.dayPill, shadow]}><View style={st.dayDot} /><Text style={st.dayT}>{t('dayOn')}</Text></View> : null}
+
+      {lasso ? (
+        <View style={StyleSheet.absoluteFill} {...pan.panHandlers}>
+          <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+            {trail.length > 1 ? <SvgLine points={trail.map((p) => `${p.x},${p.y}`).join(' ')} fill="rgba(20,20,20,0.25)" stroke="#141414" strokeWidth={3} strokeDasharray="10,7" /> : null}
+          </Svg>
+          <Pressable onPress={clearLasso} hitSlop={10} style={[st.lassoX, { left: 58, right: undefined, top: 101 }]} accessibilityLabel={t('cancel')}><Icon name="x" size={14} color="#fff" width={3} /></Pressable>
+        </View>
+      ) : null}
+      {shape ? <LassoSheet leads={inShape} poly={shape} onClose={clearLasso} onRoute={(stops) => { setRouteLine(stops.map((l) => ({ latitude: l.lat, longitude: l.lng }))); setShape(null); }} /> : null}
 
       {placing ? (
         <>
@@ -178,7 +226,7 @@ export default function MapPane({ filter, focus, placeSignal }) {
         </>
       ) : null}
 
-      {!lead && !placing ? (
+      {!lead && !placing && !shape && !lasso ? (
         <Pressable onPress={locate} style={({ pressed }) => [st.nav, shadow, pressed && { opacity: 0.7 }]} accessibilityLabel="Min plats">
           <Icon name="nav" size={20} color={C.ink} />
         </Pressable>
@@ -211,6 +259,7 @@ const st = StyleSheet.create({
   pill: { height: 48, borderRadius: R.md, backgroundColor: C.red, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
   pillT: { color: '#fff', fontWeight: '800', fontSize: 16 },
   pillGhost: { backgroundColor: C.soft }, pillGT: { color: C.ink, fontWeight: '800', fontSize: 16 },
+  lassoX: { position: 'absolute', right: -24, top: 9, width: 22, height: 22, borderRadius: 11, backgroundColor: C.red, alignItems: 'center', justifyContent: 'center' },
   clu: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#d9363e', alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: 'rgba(217,54,62,0.28)' },
   cluT: { color: '#fff', fontWeight: '800', fontSize: 12.5 },
   live: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff' },
