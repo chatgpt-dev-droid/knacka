@@ -10,7 +10,6 @@ import Icon from './Icon';
 import StatusDot from './StatusDot';
 
 const COLORS = ['#141414', '#5b3cc4', '#1d6ff2', '#d9660b', '#f5c400', '#4cd137', '#1cc7b1', '#e0122d', '#e0128c'];
-const ROUTE_MAX = 23;
 
 // "Lasso Options": what to do with the leads inside the drawn shape
 export default function LassoSheet({ leads, poly, onClose, onRoute }) {
@@ -48,7 +47,6 @@ export default function LassoSheet({ leads, poly, onClose, onRoute }) {
   };
   const route = () => {
     if (!chosen.length) return;
-    if (chosen.length > ROUTE_MAX) return Alert.alert(t('routeLimit'), t('routeLimitT').replace('{n}', ROUTE_MAX));
     const stops = orderStops(chosen.filter((l) => typeof l.lat === 'number'), here);
     onRoute(stops);
     Alert.alert(t('routeMade'), `${stops.length} ${t('routeStops')}`, [{ text: t('done') }, { text: t('openMaps'), onPress: () => openRoute(stops.slice(0, 10), here) }]);
