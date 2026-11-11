@@ -29,6 +29,8 @@ jobs:
         run: npx eas-cli channel:create main --non-interactive || true
       - name: Publish update (opens in Expo Go)
         run: npx eas-cli update --branch main --message "${{ github.event.head_commit.message || 'manual' }}" --non-interactive --json > update.json && cat update.json
+      - name: Publish update to installed apps (TestFlight / App Store)
+        run: npx eas-cli update --branch production --message "${{ github.event.head_commit.message || 'manual' }}" --non-interactive
       - name: Expo Go link
         run: |
           PID=$(node -e "console.log(require('./app.json').expo.extra.eas.projectId)")

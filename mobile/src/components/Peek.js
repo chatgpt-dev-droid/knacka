@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, Animated, PanResponder } from 'react-native';
 import { router } from 'expo-router';
 import * as SMS from 'expo-sms';
 import { useApp } from '../lib/store';
@@ -15,6 +15,18 @@ import NoteSheet from './NoteSheet';
 export default function Peek({ lead, onClose, picker }) {
   const { S, setStatus, addNote, setMeeting, rep, showToast } = useApp();
   const [noting, setNoting] = useState(false);
+  // drag the card down to close it
+  const y = useRef(new Animated.Value(0)).current;
+  const closeRef = useRef(onClose); closeRef.current = onClose;
+  const drag = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) => g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5,
+    onPanResponderMove: (_, g) => y.setValue(Math.max(0, g.dy)),
+    onPanResponderRelease: (_, g) => {
+      if (g.dy > 80 || g.vy > 0.9) Animated.timing(y, { toValue: 600, duration: 180, useNativeDriver: true }).start(() => { y.setValue(0); closeRef.current(); });
+      else Animated.spring(y, { toValue: 0, useNativeDriver: true, bounciness: 4 }).start();
+    },
+    onPanResponderTerminate: () => Animated.spring(y, { toValue: 0, useNativeDriver: true }).start(),
+  }), [y]);
   if (!lead) return null;
   const s = S.st(lead.status);
   const owner = rep(lead.owner);
@@ -22,8 +34,9 @@ export default function Peek({ lead, onClose, picker }) {
   const full = [addr(lead), lead.city, lead.zip].filter(Boolean).join(', ');
 
   return (
-    <View style={[st.sheet, shadow]}>
-      <View style={st.grab} />
+    <Animated.View style={[st.sheet, shadow, { transform: [{ translateY: y }] }]}>
+      <View {...drag.panHandlers} style={{ gap: 8 }}>
+      <View style={st.grabHit}><View style={st.grab} /></View>
       <View style={st.head}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
           <StatusDot st={s} size={32} />
@@ -34,7 +47,8 @@ export default function Peek({ lead, onClose, picker }) {
         </View>
         <Pressable onPress={() => router.push(`/lead/${lead.id}`)} style={st.details} accessibilityRole="button"><Text style={st.detailsT}>{t('details')}</Text></Pressable>
       </View>
-      <Pressable onPress={onClose} hitSlop={6}><Text style={st.addr} numberOfLines={2}>{full}</Text></Pressable>
+      <Text style={st.addr} numberOfLines={2}>{full}</Text>
+      </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.stRow}>
         {S.list.map((x) => (
@@ -66,7 +80,7 @@ export default function Peek({ lead, onClose, picker }) {
       </View>
       <Text style={st.foot}>{t('assignedTo')}: <Text style={{ fontWeight: '800', color: C.ink }}>{owner.name}</Text></Text>
       <NoteSheet visible={noting} onClose={() => setNoting(false)} onAdd={(txt) => { addNote(lead, txt); setNoting(false); }} />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -78,6 +92,7 @@ const Act = ({ icon, onPress, disabled, label, circle }) => (
 
 const st = StyleSheet.create({
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: C.surface, borderTopLeftRadius: R.lg, borderTopRightRadius: R.lg, paddingTop: 8, paddingBottom: 12, gap: 8 },
+  grabHit: { alignSelf: 'stretch', alignItems: 'center', paddingTop: 2, paddingBottom: 6 },
   grab: { alignSelf: 'center', width: 38, height: 5, borderRadius: 3, backgroundColor: C.line },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16 },
   name: { fontSize: 16, fontWeight: '800', color: C.ink },
