@@ -39,17 +39,14 @@ jobs:
         timeout-minutes: 15
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'ios'
         env:
-          EXPO_ASC_KEY_ID: WVCWRG27VG
-          EXPO_ASC_ISSUER_ID: dc4795be-a778-4d37-8496-3a6aebebe80b
+          ASC_KEY_ID: WVCWRG27VG
+          ASC_ISSUER_ID: dc4795be-a778-4d37-8496-3a6aebebe80b
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
           EXPO_APPLE_TEAM_ID: 7Q6QVS9862
           EXPO_APPLE_TEAM_TYPE: ${{ vars.APPLE_TEAM_TYPE || 'INDIVIDUAL' }}
         run: |
-          printf '%s' "${{ secrets.ASC_KEY_P8 }}" > "$RUNNER_TEMP/asc.p8"
-          export EXPO_ASC_API_KEY_PATH="$RUNNER_TEMP/asc.p8"
-          # the first build has to create the signing certificate, which EAS only does in interactive mode:
-          # run it in a pseudo terminal and accept the default answer to every question
-          npx eas-cli build -p ios --profile production --non-interactive --no-wait || \
-            (yes "" | timeout -s KILL 600 env -u CI -u GITHUB_ACTIONS -u CONTINUOUS_INTEGRATION script -qefc "npx eas-cli build -p ios --profile production --no-wait" /dev/null)
+          node scripts/ios-creds.mjs
+          npx eas-cli build -p ios --profile production --non-interactive --no-wait
       - name: Build Android app
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'android'
         run: npx eas-cli build -p android --profile preview --non-interactive --no-wait
