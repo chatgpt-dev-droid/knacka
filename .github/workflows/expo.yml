@@ -57,6 +57,19 @@ jobs:
         run: |
           printf '%s' "$ASC_KEY_P8" > asc.p8
           npx eas-cli submit -p ios --latest --profile production --non-interactive --wait
+      - name: Send latest iOS build to TestFlight
+        timeout-minutes: 20
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'submit'
+        env:
+          EXPO_ASC_KEY_ID: WVCWRG27VG
+          EXPO_ASC_ISSUER_ID: dc4795be-a778-4d37-8496-3a6aebebe80b
+          EXPO_APPLE_TEAM_ID: 7Q6QVS9862
+          EXPO_APPLE_TEAM_TYPE: INDIVIDUAL
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc.p8"
+          export EXPO_ASC_API_KEY_PATH="$RUNNER_TEMP/asc.p8"
+          npx eas-cli submit -p ios --latest --profile production --non-interactive --wait
       - name: Build Android app
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'android'
         run: npx eas-cli build -p android --profile preview --non-interactive --no-wait
