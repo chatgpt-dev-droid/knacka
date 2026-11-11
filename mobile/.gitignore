@@ -45,3 +45,4 @@ credentials.json
 *.p12
 *.mobileprovision
 dist.*
+*.p8
