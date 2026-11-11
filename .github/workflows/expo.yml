@@ -38,8 +38,8 @@ jobs:
       - name: Build iOS app and send to TestFlight
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'ios'
         env:
-          EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          EXPO_ASC_KEY_ID: WVCWRG27VG
+          EXPO_ASC_ISSUER_ID: dc4795be-a778-4d37-8496-3a6aebebe80b
           EXPO_APPLE_TEAM_ID: 7Q6QVS9862
           EXPO_APPLE_TEAM_TYPE: ${{ vars.APPLE_TEAM_TYPE || 'INDIVIDUAL' }}
         run: |
