@@ -36,6 +36,7 @@ jobs:
           echo "EXPO_GO_LINK=exp://u.expo.dev/$PID?channel-name=main&runtime-version=exposdk:58.0.0"
           echo "QR=https://qr.expo.dev/eas-update?projectId=$PID&runtimeVersion=exposdk:58.0.0&channel=main"
       - name: Build iOS app and send to TestFlight
+        timeout-minutes: 15
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'ios'
         env:
           EXPO_ASC_KEY_ID: WVCWRG27VG
@@ -48,7 +49,7 @@ jobs:
           # the first build has to create the signing certificate, which EAS only does in interactive mode:
           # run it in a pseudo terminal and accept the default answer to every question
           npx eas-cli build -p ios --profile production --non-interactive --no-wait || \
-            (yes "" | timeout 900 script -qefc "npx eas-cli build -p ios --profile production --no-wait" /dev/null)
+            (yes "" | timeout -s KILL 600 env -u CI -u GITHUB_ACTIONS -u CONTINUOUS_INTEGRATION script -qefc "npx eas-cli build -p ios --profile production --no-wait" /dev/null)
       - name: Build Android app
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'android'
         run: npx eas-cli build -p android --profile preview --non-interactive --no-wait
