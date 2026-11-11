@@ -45,7 +45,10 @@ jobs:
         run: |
           printf '%s' "${{ secrets.ASC_KEY_P8 }}" > "$RUNNER_TEMP/asc.p8"
           export EXPO_ASC_API_KEY_PATH="$RUNNER_TEMP/asc.p8"
-          npx eas-cli build -p ios --profile production --non-interactive --no-wait
+          # the first build has to create the signing certificate, which EAS only does in interactive mode:
+          # run it in a pseudo terminal and accept the default answer to every question
+          npx eas-cli build -p ios --profile production --non-interactive --no-wait || \
+            (yes "" | timeout 900 script -qefc "npx eas-cli build -p ios --profile production --no-wait" /dev/null)
       - name: Build Android app
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'android'
         run: npx eas-cli build -p android --profile preview --non-interactive --no-wait
