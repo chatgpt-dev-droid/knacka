@@ -41,7 +41,7 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.surface, paddingTop: ins.top }}>
-      <View style={st.top}><Text style={{ fontSize: 11, color: C.muted }}>Knacka · {BUILD}</Text><View style={st.av}><Text style={st.avT}>{initials(me?.name)}</Text></View></View>
+      <View style={st.top}><Text style={{ fontSize: 11, color: C.muted }}>KnockKnock · {BUILD}</Text><View style={st.av}><Text style={st.avT}>{initials(me?.name)}</Text></View></View>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <View style={st.hero}>
           <Text style={{ fontSize: 30 }}>👋</Text>

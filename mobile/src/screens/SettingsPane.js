@@ -54,7 +54,7 @@ export default function More({ embedded, header }) {
       ) : null}
 
       <Btn kind="ghost" title={t('logout')} onPress={async () => { await endDay(); logout(); }} />
-      <Text style={{ textAlign: 'center', color: C.muted, fontSize: 12 }}>Knacka {Constants.expoConfig?.version || ''} · {BUILD}</Text>
+      <Text style={{ textAlign: 'center', color: C.muted, fontSize: 12 }}>KnockKnock {Constants.expoConfig?.version || ''} · {BUILD}</Text>
     </ScrollView>
   );
 }

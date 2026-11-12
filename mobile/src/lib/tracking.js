@@ -62,7 +62,7 @@ export async function startDay(myName) {
       await Location.startLocationUpdatesAsync(TRACK_TASK, {
         accuracy: Location.Accuracy.High, distanceInterval: 20, timeInterval: 30000, deferredUpdatesInterval: 60000,
         showsBackgroundLocationIndicator: true, pausesUpdatesAutomatically: false, activityType: Location.ActivityType.Fitness,
-        foregroundService: { notificationTitle: 'Knacka – arbetsdagen pågår', notificationBody: 'Din rutt sparas tills du trycker Avsluta dagen.', notificationColor: '#0b6e7f' },
+        foregroundService: { notificationTitle: 'KnockKnock – arbetsdagen pågår', notificationBody: 'Din rutt sparas tills du trycker Avsluta dagen.', notificationColor: '#0b6e7f' },
       });
       return 'ok';
     }

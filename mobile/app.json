@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Knacka",
+    "name": "KnockKnock",
     "slug": "knacka",
     "scheme": "knacka",
     "version": "1.0.0",
@@ -14,7 +14,8 @@
         "UIBackgroundModes": [
           "location"
         ],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "KnockKnock"
       },
       "appleTeamId": "7Q6QVS9862"
     },
