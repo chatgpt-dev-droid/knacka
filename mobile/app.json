@@ -22,7 +22,7 @@
       "package": "nu.fiskaren.knacka",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#0b6e7f"
+        "backgroundColor": "#FBF3E7"
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",

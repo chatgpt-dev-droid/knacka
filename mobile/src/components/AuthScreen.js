@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../lib/firebase';
@@ -25,8 +25,7 @@ export default function AuthScreen() {
   const [msg, setMsg] = useState(null); const [busy, setBusy] = useState(false);
 
   const Logo = (
-    <View style={st.logo}><View style={st.logoK}><Text style={st.logoKT}>K</Text></View>
-      <View><Text style={st.logoT}>Knacka</Text><Text style={st.logoS}>Fiskaren.nu</Text></View></View>
+    <View style={{ alignItems: 'center' }}><Image source={require('../../assets/logo.png')} style={{ width: 150, height: 150, borderRadius: 34 }} accessibilityLabel="Knock Knock Knock" /></View>
   );
 
   if (phase === 'pending' || phase === 'verify') {
