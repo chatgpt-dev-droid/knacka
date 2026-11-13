@@ -1061,6 +1061,7 @@ function readImport(file){
     const rx=v=>new RegExp("^"+String(v||"").toLowerCase().replace(/[.*+^${}()|[\]\\]/g,"\\$&").replace(/\?/g,".")+"$");
     const broken=S.leads.filter(l=>(l.street||"").includes("?")).map(l=>({l,re:rx(l.street),num:(l.num||"").toLowerCase()}));
     const repairs=[];
+    const existPos=new Set(S.leads.filter(l=>typeof l.lat==="number"&&typeof l.lng==="number").map(l=>l.lat.toFixed(5)+","+l.lng.toFixed(5)));
     rows.slice(1).forEach(r=>{
       let {street,num}=splitAddr(g(r,"street"));if(g(r,"num"))num=g(r,"num");
       let first=g(r,"first"),last=g(r,"last");if(!first&&!last&&g(r,"name")){const p=g(r,"name").split(/\s+/);first=p.shift()||"";last=p.join(" ")}
@@ -1070,6 +1071,10 @@ function readImport(file){
           if((l.first||"").includes("?")&&rx(l.first).test(first.toLowerCase()))u.first=first;
           if((l.last||"").includes("?")&&rx(l.last).test(last.toLowerCase()))u.last=last;
           repairs.push({id:l.id,u});exist.add((street+"|"+num).toLowerCase());return}}
+      // rows without a street name (or with coordinates typed as the street) are recognised by their position instead
+      const coordSt=/^\s*-?\d+[.,]\d+\s*[,;]\s*-?\d+[.,]\d+\s*$/.test(street);if(coordSt){street="";num=""}
+      if(!street){const la0=parseFloat(g(r,"lat").replace(",",".")),lo0=parseFloat(g(r,"lng").replace(",","."));
+        if(isFinite(la0)&&isFinite(lo0)){const pk=la0.toFixed(5)+","+lo0.toFixed(5);if(existPos.has(pk)){dup++;return}existPos.add(pk)}}
       const key=(street+"|"+num).toLowerCase();if(street&&exist.has(key)){dup++;return}exist.add(key);
       let lat=parseFloat(g(r,"lat").replace(",",".")),lng=parseFloat(g(r,"lng").replace(",","."));if(!(lat>54&&lat<70&&lng>10&&lng<25)){lat=NaN;lng=NaN}
       const ow=g(r,"owner").toLowerCase();const owner=(team().find(u=>ow&&(u.email.toLowerCase()===ow||ow.includes((u.name||"").toLowerCase().split(" ")[0])))||{}).id||S.uid;
