@@ -49,7 +49,7 @@ const T={sv:{
  notes:"Anteckningar",addNote:"Spara anteckning",noteAdded:"Anteckning sparad",noNotes:"Inga anteckningar än.",
  gcal:"+ Google-kalender",ical:"+ iPhone-kalender",revToday:"återbesök idag",
  planRoute:"Planera rutt",routeStops:"stopp",openGmaps:"Öppna i Google Maps",endRoute:"Avsluta rutt",routeMax:"Google Maps tar max 10 stopp åt gången – resten visas på kartan.",noStops:"Inga stopp med plats den här dagen.",
- impTitle:"Importera från SalesRabbit",impHelp:"Exportera dina leads från SalesRabbit som CSV-fil (Leads → markera alla → Export) och välj filen här. Dubbletter hoppas över.",impPick:"Välj CSV-fil",impFound:"rader i filen",impNew:"nya leads",impDup:"finns redan",impNoPos:"saknar koordinater – adressen slås upp (ca 1 s per adress)",impGo:"Importera",impBusy:"Importerar…",impGeo:"Slår upp adresser",impDone:"Klart! Importerade",impFail:"kunde inte placeras på kartan",impCols:"Kolumner som hittades",impBad:"Kunde inte läsa filen. Är det en CSV-fil från SalesRabbit?"},
+ impTitle:"Importera från SalesRabbit",impHelp:"Exportera dina leads från SalesRabbit som CSV-fil (Leads → markera alla → Export) och välj filen här. Dubbletter hoppas över.",impPick:"Välj CSV-fil",impFound:"rader i filen",impNew:"nya leads",impDup:"finns redan",impFix:"adresser med trasiga å/ä/ö rättas",impNoPos:"saknar koordinater – adressen slås upp (ca 1 s per adress)",impGo:"Importera",impBusy:"Importerar…",impGeo:"Slår upp adresser",impDone:"Klart! Importerade",impFail:"kunde inte placeras på kartan",impCols:"Kolumner som hittades",impBad:"Kunde inte läsa filen. Är det en CSV-fil från SalesRabbit?"},
 en:{
  tMap:"Map",tLeads:"Leads",tCal:"Calendar",tComp:"Compete",tMore:"More",searchPh:"Search address or name",
  cancel:"Cancel",placeHere:"Place here",
@@ -1057,34 +1057,45 @@ function readImport(file){
     const g=(r,k)=>m[k]!=null?(r[m[k]]||"").trim():"";
     const exist=new Set(S.leads.map(l=>((l.street||"")+"|"+(l.num||"")).toLowerCase()));
     const items=[];let dup=0;
+    // leads saved earlier with "?" where å/ä/ö should be: repaired from the file instead of imported twice
+    const rx=v=>new RegExp("^"+String(v||"").toLowerCase().replace(/[.*+^${}()|[\]\\]/g,"\\$&").replace(/\?/g,".")+"$");
+    const broken=S.leads.filter(l=>(l.street||"").includes("?")).map(l=>({l,re:rx(l.street),num:(l.num||"").toLowerCase()}));
+    const repairs=[];
     rows.slice(1).forEach(r=>{
       let {street,num}=splitAddr(g(r,"street"));if(g(r,"num"))num=g(r,"num");
-      const key=(street+"|"+num).toLowerCase();if(street&&exist.has(key)){dup++;return}exist.add(key);
       let first=g(r,"first"),last=g(r,"last");if(!first&&!last&&g(r,"name")){const p=g(r,"name").split(/\s+/);first=p.shift()||"";last=p.join(" ")}
+      if(street&&!street.includes("?")){const bi=broken.findIndex(x=>x.num===num.toLowerCase()&&x.re.test(street.toLowerCase()));
+        if(bi>=0){const l=broken.splice(bi,1)[0].l;const u={street,updated:Date.now()};
+          if((l.city||"").includes("?")&&g(r,"city"))u.city=g(r,"city");
+          if((l.first||"").includes("?")&&rx(l.first).test(first.toLowerCase()))u.first=first;
+          if((l.last||"").includes("?")&&rx(l.last).test(last.toLowerCase()))u.last=last;
+          repairs.push({id:l.id,u});exist.add((street+"|"+num).toLowerCase());return}}
+      const key=(street+"|"+num).toLowerCase();if(street&&exist.has(key)){dup++;return}exist.add(key);
       let lat=parseFloat(g(r,"lat").replace(",",".")),lng=parseFloat(g(r,"lng").replace(",","."));if(!(lat>54&&lat<70&&lng>10&&lng<25)){lat=NaN;lng=NaN}
       const ow=g(r,"owner").toLowerCase();const owner=(team().find(u=>ow&&(u.email.toLowerCase()===ow||ow.includes((u.name||"").toLowerCase().split(" ")[0])))||{}).id||S.uid;
       const dt=Date.parse(g(r,"date"));const mt=Date.parse(g(r,"meeting"));const ks=g(r,"kstatus");
       items.push({first,last,phone:g(r,"phone"),email:g(r,"email"),street,num,zip:g(r,"zip"),city:g(r,"city"),
         lat:isFinite(lat)?lat:null,lng:isFinite(lng)?lng:null,status:ks||mapStatus(g(r,"status")),statusRaw:ks?stLabel(ks):g(r,"status"),note:g(r,"note"),owner,t:isFinite(dt)?dt:Date.now(),meeting:isFinite(mt)?mt:null});
     });
-    importSheet(head,m,items,dup,rows.length-1);
+    importSheet(head,m,items,dup,rows.length-1,repairs);
   };
   fr.readAsText(file);
 }
-function importSheet(head,m,items,dup,total){
+function importSheet(head,m,items,dup,total,repairs=[]){
   const noPos=items.filter(i=>i.lat==null).length;
   const stc={};items.forEach(i=>stc[i.status]=(stc[i.status]||0)+1);
   openSheet(`<div class="shead"><h2>${t("impTitle")}</h2><button class="x" id="sx">${icon.x}</button></div>
     <div class="sec"><div class="card" style="gap:6px">
       <div><b>${total}</b> ${t("impFound")} · <b>${items.length}</b> ${t("impNew")} · ${dup} ${t("impDup")}</div>
+      ${repairs.length?`<div class="sub" style="margin:0"><b>${repairs.length}</b> ${t("impFix")}</div>`:""}
       ${noPos?`<div class="sub" style="margin:0"><b>${noPos}</b> ${t("impNoPos")}</div>`:""}
       <div class="chips">${Object.entries(stc).map(([k,n])=>`<span class="pill" style="--c:${k==="ny"?"var(--muted)":st(k).color}">${esc(stLabel(k))} ${n}</span>`).join("")}</div></div>
     <h3>${t("impCols")}</h3><div class="sub" style="margin:0">${Object.entries(m).map(([k,i])=>`${k} ← <b>${esc(head[i])}</b>`).join(" · ")}</div>
     <div class="list">${items.slice(0,3).map(i=>`<div class="li" style="cursor:default;grid-template-columns:1fr auto"><span class="t"><b>${esc((i.street+" "+i.num).trim()||"—")}</b><small>${esc((i.first+" "+i.last).trim())} ${esc(i.phone)} · ${esc(i.statusRaw||"")}</small></span><span class="r">${esc(rep(i.owner).name)}</span></div>`).join("")}</div>
     <div id="impProg" class="sub" hidden></div>
-    <button class="btn" id="impGo" ${items.length?"":"disabled"}>${t("impGo")} ${items.length}</button></div>`,"import");
+    <button class="btn" id="impGo" ${items.length||repairs.length?"":"disabled"}>${t("impGo")} ${items.length}</button></div>`,"import");
   $("sx").onclick=closeSheet;
-  $("impGo").onclick=()=>runImport(items);
+  $("impGo").onclick=()=>runImport(items,repairs);
 }
 async function geocode(i){
   // several attempts: exact address with zip, then with town, then street only in the town
@@ -1098,8 +1109,9 @@ async function geocode(i){
   return null;
 }
 
-async function runImport(items){
+async function runImport(items,repairs=[]){
   const go=$("impGo"),pr=$("impProg");go.disabled=true;go.textContent=t("impBusy");pr.hidden=false;
+  try{for(let s0=0;s0<repairs.length;s0+=400){const b=db.batch();repairs.slice(s0,s0+400).forEach(x=>b.update(db.collection("leads").doc(x.id),x.u));await b.commit()}}catch(e){err(e);return}
   const toDoc=i=>({lat:i.lat,lng:i.lng,street:i.street,num:i.num,zip:i.zip||"",city:i.city||"",first:i.first,last:i.last,phone:i.phone,email:i.email,note:"",status:i.status,
     revisit:isRevisitSt(i.status)?dstr(new Date(Date.now()+7*DAY)):null,meeting:i.meeting||null,owner:i.owner,created:i.t,updated:Date.now(),
     hist:i.status==="ny"?[]:[{t:i.t,rep:i.owner,s:i.status}],notes:i.note?[{t:i.t,rep:i.owner,text:i.note}]:[],source:"salesrabbit"});
