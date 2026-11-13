@@ -1108,9 +1108,12 @@ async function geocode(i){
   const tries=[[sn,[i.zip,city].filter(Boolean).join(" ")],[sn,city],[sn,i.zip],[sn,"Stockholms län"],[i.street,city||i.zip]].map(x=>x.filter(Boolean).join(", "));
   const seen=new Set();
   for(const q of tries){if(!q||seen.has(q))continue;seen.add(q);
-    try{const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=se&q="+encodeURIComponent(q));const j=await r.json();
-      if(j&&j[0]){const la=parseFloat(j[0].lat),lo=parseFloat(j[0].lon);if(la>58.5&&la<60.5&&lo>16.5&&lo<19.8)return [la,lo]}}catch(e){}
-    await new Promise(r=>setTimeout(r,1100));}
+    // never more than one lookup per second, also after a hit, otherwise the map service starts refusing
+    const wait=1150-(Date.now()-(geocode.last||0));if(wait>0)await new Promise(r=>setTimeout(r,wait));geocode.last=Date.now();
+    try{let r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=se&q="+encodeURIComponent(q));
+      if(r.status===429||r.status>=500){await new Promise(x=>setTimeout(x,6000));geocode.last=Date.now();r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=se&q="+encodeURIComponent(q))}
+      const j=await r.json();
+      if(j&&j[0]){const la=parseFloat(j[0].lat),lo=parseFloat(j[0].lon);if(la>58.5&&la<60.5&&lo>16.5&&lo<19.8)return [la,lo]}}catch(e){}}
   return null;
 }
 
