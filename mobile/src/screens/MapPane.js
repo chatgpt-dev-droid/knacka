@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { View, Text, Pressable, TextInput, FlatList, StyleSheet, Keyboard, Alert, PanResponder } from 'react-native';
+import { View, Text, Pressable, TextInput, FlatList, StyleSheet, Keyboard, Alert, PanResponder, Animated } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import Svg, { Polyline as SvgLine } from 'react-native-svg';
 import MapView, { Polygon, Polyline, Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -28,12 +29,32 @@ const Tool = ({ name, onPress, active, label }) => (
   </Pressable>
 );
 
+const WHEEL_R = 82;
+
 export default function MapPane({ filter, focus, placeSignal }) {
-  const { leads, S, here, user, me, isChef, live, areas, newLeadAt, showToast, users } = useApp();
+  const { leads, S, here, user, me, isChef, live, areas, newLeadAt, setStatus, showToast, users } = useApp();
   const map = useRef(null);
   const [region, setRegion] = useState(null);
   const [sel, setSel] = useState(null);
   const [placing, setPlacing] = useState(false);
+  // press and hold on the map: a wheel of statuses opens, and the one you tap becomes a new pin right there
+  const [wheel, setWheel] = useState(null);
+  const [box, setBox] = useState({ w: 390, h: 600 });
+  const pop = useRef(new Animated.Value(0)).current;
+  const openWheel = (e) => {
+    const n = e?.nativeEvent; if (!n?.coordinate || !n.position || lasso || shape || placing) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    const m = WHEEL_R + 28;
+    setSel(null); setSearching(false);
+    setWheel({ lat: n.coordinate.latitude, lng: n.coordinate.longitude,
+      x: Math.min(Math.max(n.position.x, m), box.w - m), y: Math.min(Math.max(n.position.y, m), box.h - m) });
+    pop.setValue(0); Animated.spring(pop, { toValue: 1, useNativeDriver: true, bounciness: 7, speed: 18 }).start();
+  };
+  const pickWheel = async (k) => {
+    const w = wheel; setWheel(null); if (!w) return;
+    const id = await newLeadAt(w.lat, w.lng);
+    setStatus({ id, status: 'ny', revisit: null, owner: user.uid }, k);
+  };
   const [sat, setSat] = useState(false);
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
@@ -141,10 +162,10 @@ export default function MapPane({ filter, focus, placeSignal }) {
   const nameFor = (uid) => (users.find((u) => u.id === uid) || {}).name || '';
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg }}>
+    <View style={{ flex: 1, backgroundColor: C.bg }} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
       <MapView ref={map} style={StyleSheet.absoluteFill} provider={PROVIDER_DEFAULT} initialRegion={STHLM}
         mapType={sat ? 'hybrid' : 'standard'} showsUserLocation showsMyLocationButton={false} showsPointsOfInterest={false} showsBuildings toolbarEnabled={false}
-        onRegionChangeComplete={setRegion} onPress={(e) => { if (e?.nativeEvent?.action === 'marker-press') return; if (sel) setSel(null); setSearching(false); Keyboard.dismiss(); }} rotateEnabled={false} pitchEnabled={false}>
+        onRegionChangeComplete={setRegion} onLongPress={openWheel} onPanDrag={() => { if (wheel) setWheel(null); }} onPress={(e) => { if (e?.nativeEvent?.action === 'marker-press') return; if (sel) setSel(null); setSearching(false); Keyboard.dismiss(); }} rotateEnabled={false} pitchEnabled={false}>
         {filter.areas ? areas.filter((a) => a.poly.length > 2).map((a) => (
           <Polygon key={a.id} coordinates={a.poly.map(([la, lo]) => ({ latitude: la, longitude: lo }))} strokeColor={a.color || C.accent} fillColor={(a.color || '#0b6e7f') + '1f'} strokeWidth={2} tappable={false} />
         )) : null}
@@ -232,6 +253,23 @@ export default function MapPane({ filter, focus, placeSignal }) {
         </Pressable>
       ) : null}
 
+      {wheel ? (
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => setWheel(null)} accessibilityLabel={t('cancel')}>
+          <Animated.View pointerEvents="box-none" style={{ position: 'absolute', left: wheel.x, top: wheel.y, opacity: pop, transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }] }}>
+            <Pressable onPress={() => setWheel(null)} hitSlop={6} style={[st.wheelX, shadow]} accessibilityLabel={t('cancel')}><Icon name="x" size={16} color="#fff" width={3} /></Pressable>
+            {S.list.slice(0, 10).map((x, i, a) => {
+              const ang = (i / a.length) * 2 * Math.PI;
+              return (
+                <Pressable key={x.k} onPress={() => pickWheel(x.k)} hitSlop={5} accessibilityLabel={x.label}
+                  style={({ pressed }) => [st.wheelDot, shadow, { left: Math.cos(ang) * WHEEL_R - 19, top: Math.sin(ang) * WHEEL_R - 19 }, pressed && { transform: [{ scale: 1.2 }] }]}>
+                  <StatusDot st={x} size={38} />
+                </Pressable>
+              );
+            })}
+          </Animated.View>
+        </Pressable>
+      ) : null}
+
       {lead ? <Peek lead={lead} onClose={() => setSel(null)} picker={picker} /> : null}
       {picker.node}
     </View>
@@ -239,6 +277,8 @@ export default function MapPane({ filter, focus, placeSignal }) {
 }
 
 const st = StyleSheet.create({
+  wheelX: { position: 'absolute', left: -15, top: -15, width: 30, height: 30, borderRadius: 15, backgroundColor: '#8e8e93', alignItems: 'center', justifyContent: 'center' },
+  wheelDot: { position: 'absolute', width: 38, height: 38, borderRadius: 19 },
   col: { position: 'absolute', top: 10, backgroundColor: C.surface, borderRadius: 10, paddingVertical: 2, ...shadow },
   tool: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
   searchWrap: { position: 'absolute', top: 10, left: 60, right: 60, gap: 6 },
