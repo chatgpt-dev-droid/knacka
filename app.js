@@ -1113,7 +1113,10 @@ async function geocode(i){
     try{let r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=se&q="+encodeURIComponent(q));
       if(r.status===429||r.status>=500){await new Promise(x=>setTimeout(x,6000));geocode.last=Date.now();r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=se&q="+encodeURIComponent(q))}
       const j=await r.json();
-      if(j&&j[0]){const la=parseFloat(j[0].lat),lo=parseFloat(j[0].lon);if(la>58.5&&la<60.5&&lo>16.5&&lo<19.8)return [la,lo]}}catch(e){}}
+      if(j&&j[0]){const la=parseFloat(j[0].lat),lo=parseFloat(j[0].lon);if(la>58.5&&la<60.5&&lo>16.5&&lo<19.8)return [la,lo]}}catch(e){}
+    // second map service (Photon) when the first one finds nothing or refuses
+    try{const r=await fetch("https://photon.komoot.io/api/?limit=1&lat=59.33&lon=18.06&q="+encodeURIComponent(q));const j=await r.json();const f=j&&j.features&&j.features[0];
+      if(f&&(f.properties.countrycode||"").toUpperCase()==="SE"&&(!i.num||!f.properties.housenumber||String(f.properties.housenumber).toLowerCase()===String(i.num).toLowerCase()||q===tries[tries.length-1])){const [lo,la]=f.geometry.coordinates;if(la>58.5&&la<60.5&&lo>16.5&&lo<19.8)return [la,lo]}}catch(e){}}
   return null;
 }
 
