@@ -16,6 +16,18 @@ const hay = (l, by) => ({
   name: nameOf(l), first: l.first || '', last: l.last || '', biz: l.company || '', street: addr(l), city: l.city || '', notes: (l.notes || []).map((n) => n.text).join(' '),
 }[by] || '').toLowerCase();
 
+const norm = (v) => String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[?]/g, '');
+// true when word x starts like w with at most one letter wrong, missing or extra
+const near = (x, w) => {
+  const a = x.slice(0, w.length + 1), b = w;
+  if (Math.abs(a.length - b.length) > 1 && !x.startsWith(b.slice(0, -1))) return false;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  let best = 99; for (let i = Math.max(0, b.length - 1); i <= a.length; i++) best = Math.min(best, d[i][b.length]);
+  return best <= 1;
+};
+
 // "List" tab: red search bar with Search By, Sort By and a map shortcut on every row
 export default function ListPane({ filter, onMap }) {
   const { leads, S, user, here } = useApp();
@@ -27,8 +39,9 @@ export default function ListPane({ filter, onMap }) {
 
   const list = useMemo(() => {
     let ls = applyFilter(leads, filter, user.uid);
-    const s = q.trim().toLowerCase();
-    if (s) ls = ls.filter((l) => hay(l, by).includes(s));
+    // forgiving search: every word must match, small typos allowed ("ann andreas" finds "An Andreas")
+    const words = norm(q).split(/\s+/).filter(Boolean);
+    if (words.length) ls = ls.filter((l) => { const h = norm(hay(l, by)); const hw = h.split(/[\s,]+/); return words.every((w) => h.includes(w) || (w.length >= 3 && hw.some((x) => x && near(x, w)))); });
     const rows = ls.map((l) => ({ l, d: here && typeof l.lat === 'number' ? meters([here.lat, here.lng], [l.lat, l.lng]) : null }));
     const key = { updated: (x) => -(Math.max(lastVisit(x.l), x.l.updated || 0)), name: (x) => nameOf(x.l).toLowerCase() || '￿', street: (x) => addr(x.l).toLowerCase(), dist: (x) => x.d ?? 1e12, appt: (x) => x.l.meeting || 9e15 }[sort];
     rows.sort((a, b) => { const ka = key(a), kb = key(b); return (ka < kb ? -1 : ka > kb ? 1 : 0) * (asc ? 1 : -1); });
