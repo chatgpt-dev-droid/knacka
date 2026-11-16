@@ -10,6 +10,7 @@ import { orderStops, openRoute } from '../lib/links';
 import { addr } from '../lib/util';
 import Icon from './Icon';
 import StatusDot from './StatusDot';
+import NoteSheet from './NoteSheet';
 
 const COLORS = ['#141414', '#5b3cc4', '#1d6ff2', '#d9660b', '#f5c400', '#4cd137', '#1cc7b1', '#e0122d', '#e0128c'];
 
@@ -18,6 +19,7 @@ export default function LassoSheet({ leads, poly, onClose, onRoute }) {
   const { S, user, team, isChef, here, showToast, settings, me, updLead } = useApp();
   const [msg, setMsg] = useState(null);
   const [setSt, setSetSt] = useState(false);
+  const [editMsg, setEditMsg] = useState(false);
   const [off, setOff] = useState([]); // statuses switched off
   const [view, setView] = useState('main'); // main | area | assign | status | areaAssign
   const [title, setTitle] = useState('');
@@ -153,7 +155,8 @@ export default function LassoSheet({ leads, poly, onClose, onRoute }) {
               <View style={st.sub}><Pressable hitSlop={10} onPress={() => setView('main')}><Icon name="chevL" size={22} color={C.red} /></Pressable><Text style={st.subT}>{t('sendSms')}</Text><Pressable hitSlop={10} onPress={sendSms} disabled={!withPhone.length || busy}><Text style={[st.red, { fontWeight: '800' }, (!withPhone.length || busy) && { opacity: 0.4 }]}>{t('start')}</Text></Pressable></View>
               <View style={{ paddingHorizontal: 16, gap: 8 }}>
                 <Text style={st.uR}>{t('smsInfo').replace('{n}', withPhone.length).replace('{m}', chosen.length - withPhone.length)}</Text>
-                <TextInput value={tmpl} onChangeText={setMsg} multiline style={st.msg} />
+                <Pressable onPress={() => setEditMsg(true)} style={st.msg} accessibilityRole="button" accessibilityLabel={t('sendSms')}><Text style={{ fontSize: 15.5, color: C.ink }} numberOfLines={7}>{tmpl}</Text></Pressable>
+                <NoteSheet visible={editMsg} initial={tmpl} title={t('sendSms')} action={t('done')} maxLength={1000} onClose={() => setEditMsg(false)} onAdd={(v) => { setMsg(v); setEditMsg(false); }} />
                 <Text style={st.uR}>{t('smsNameHint')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={st.uN}>{t('smsSetStatus')}</Text><Switch value={setSt} onValueChange={setSetSt} trackColor={{ true: C.red }} /></View>
               </View>

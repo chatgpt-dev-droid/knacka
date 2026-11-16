@@ -5,7 +5,7 @@ import { C } from '../lib/theme';
 import Icon from './Icon';
 
 // SalesRabbit's "Note" sheet: X – Note – Add
-export default function NoteSheet({ visible, onClose, onAdd, initial }) {
+export default function NoteSheet({ visible, onClose, onAdd, initial, title, action, maxLength = 5000 }) {
   const [txt, setTxt] = useState('');
   useEffect(() => { if (visible) setTxt(initial || ''); }, [visible, initial]);
   const add = () => { const v = txt.trim(); if (!v) return; onAdd(v); setTxt(''); };
@@ -16,11 +16,11 @@ export default function NoteSheet({ visible, onClose, onAdd, initial }) {
         <View style={st.sheet}>
           <View style={st.head}>
             <Pressable hitSlop={12} onPress={onClose}><Icon name="x" size={20} color={C.ink} /></Pressable>
-            <Text style={st.title}>{t('note')}</Text>
-            <Pressable hitSlop={12} onPress={add} disabled={!txt.trim()}><Text style={[st.add, !txt.trim() && { opacity: 0.4 }]}>{t('add')}</Text></Pressable>
+            <Text style={st.title}>{title || t('note')}</Text>
+            <Pressable hitSlop={12} onPress={add} disabled={!txt.trim()}><Text style={[st.add, !txt.trim() && { opacity: 0.4 }]}>{action || t('add')}</Text></Pressable>
           </View>
-          <TextInput autoFocus value={txt} onChangeText={setTxt} placeholder={t('addNotePh')} placeholderTextColor={C.muted} multiline style={st.in} maxLength={5000} />
-          <Text style={{ textAlign: 'right', color: C.muted, fontSize: 12, paddingHorizontal: 16, paddingBottom: 10 }}>{txt.length}/5000</Text>
+          <TextInput autoFocus value={txt} onChangeText={setTxt} placeholder={t('addNotePh')} placeholderTextColor={C.muted} multiline style={st.in} maxLength={maxLength} />
+          <Text style={{ textAlign: 'right', color: C.muted, fontSize: 12, paddingHorizontal: 16, paddingBottom: 10 }}>{txt.length}/{maxLength}</Text>
         </View>
       </KeyboardAvoidingView>
     </Modal>
