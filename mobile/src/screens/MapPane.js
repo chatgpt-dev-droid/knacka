@@ -74,7 +74,7 @@ export default function MapPane({ filter, focus, placeSignal }) {
   useEffect(() => {
     if (!focus) return;
     const l = leads.find((x) => x.id === focus.id);
-    if (l && map.current) { setSel(l.id); map.current.animateToRegion({ latitude: l.lat, longitude: l.lng, latitudeDelta: 0.003, longitudeDelta: 0.003 }, 500); }
+    if (l && map.current && typeof l.lat === 'number') { setSel(l.id); map.current.animateToRegion({ latitude: l.lat, longitude: l.lng, latitudeDelta: 0.003, longitudeDelta: 0.003 }, 500); }
   }, [focus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export default function MapPane({ filter, focus, placeSignal }) {
   }, [q, leads]);
 
   const open = useCallback((l) => { setSel(l.id); setPlacing(false); }, []);
-  const goTo = (l) => { Keyboard.dismiss(); setSearching(false); setQ(''); setSel(l.id); map.current?.animateToRegion({ latitude: l.lat, longitude: l.lng, latitudeDelta: 0.003, longitudeDelta: 0.003 }, 500); };
+  const goTo = (l) => { Keyboard.dismiss(); setSearching(false); setQ(''); setSel(l.id); if (typeof l.lat === 'number') map.current?.animateToRegion({ latitude: l.lat, longitude: l.lng, latitudeDelta: 0.003, longitudeDelta: 0.003 }, 500); };
   const locate = () => { if (here) map.current?.animateToRegion({ latitude: here.lat, longitude: here.lng, latitudeDelta: 0.004, longitudeDelta: 0.004 }, 500); else showToast(t('noGps')); };
   // ----- lasso: draw a shape with the finger, then act on the leads inside it -----
   const [lasso, setLasso] = useState(false);      // drawing mode on

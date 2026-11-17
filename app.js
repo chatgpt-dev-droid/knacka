@@ -398,6 +398,7 @@ function drawPins(){
   if(!map)return;
   const seen={};
   S.leads.forEach(l=>{
+    if(typeof l.lat!=="number"||typeof l.lng!=="number")return;
     seen[l.id]=1;
     const k=iconKey(l);const m0=markers[l.id];
     if(m0){if(m0.__k!==k){m0.setIcon(pinIcon(l));m0.__k=k}const ll=m0.getLatLng();if(ll.lat!==l.lat||ll.lng!==l.lng)m0.setLatLng([l.lat,l.lng])}
@@ -709,7 +710,7 @@ $("q").addEventListener("input",()=>{
   const hits=S.leads.filter(l=>(addr(l)+" "+nameOf(l)+" "+(l.phone||"")).toLowerCase().includes(q)).slice(0,12);
   $("statstrip").hidden=true;$("results").hidden=false;
   $("resultsBox").innerHTML=hits.length?hits.map(l=>{return `<button data-id="${l.id}">${stDot(l.status,28)}<span style="min-width:0"><b>${esc(addr(l))}</b><br><small style="color:var(--muted)">${esc(nameOf(l)||stLabel(l.status))}</small></span></button>`}).join(""):`<div class="empty">—</div>`;
-  $("resultsBox").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const l=S.leads.find(x=>x.id===b.dataset.id);$("q").value="";$("results").hidden=true;$("searchRow").hidden=true;$("statstrip").hidden=false;$("q").blur();map.flyTo([l.lat,l.lng],18);openLead(l.id)});
+  $("resultsBox").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const l=S.leads.find(x=>x.id===b.dataset.id);$("q").value="";$("results").hidden=true;$("searchRow").hidden=true;$("statstrip").hidden=false;$("q").blur();if(typeof l.lat==="number")map.flyTo([l.lat,l.lng],18);openLead(l.id)});
 });
 
 /* ================= filter ================= */
