@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       build:
-        description: "none | android | ios (build + TestFlight) | submit (send latest iOS build to TestFlight)"
+        description: "none | android (APK link) | ios (build + TestFlight) | submit (send latest iOS build to TestFlight)"
         default: none
   push:
     branches: [main]
@@ -22,7 +22,7 @@ jobs:
       - name: Stamp build
         run: echo "export const BUILD = '$(TZ=Europe/Stockholm date '+%d %b %H:%M')';" > src/lib/build.js
       - name: Link Expo project
-        run: npx eas-cli init --non-interactive --force
+        run: npx eas-cli init --non-interactive --force || true
       - name: Configure updates
         run: npx eas-cli update:configure --non-interactive || true
       - name: Channel main -> branch main
@@ -59,6 +59,12 @@ jobs:
         run: |
           printf '%s' "$ASC_KEY_P8" > asc.p8
           npx eas-cli submit -p ios --latest --profile production --non-interactive --wait
-      - name: Build Android app
+      - name: Build Android app (APK download link)
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.build == 'android'
-        run: npx eas-cli build -p android --profile preview --non-interactive --no-wait
+        timeout-minutes: 60
+        env:
+          GMAPS: ${{ secrets.GOOGLE_MAPS_KEY }}
+        run: |
+          if [ -n "$GMAPS" ]; then npx eas-cli env:create --name GOOGLE_MAPS_KEY --value "$GMAPS" --environment production --visibility secret --scope project --force --non-interactive; else echo "::warning::GOOGLE_MAPS_KEY secret missing - the map will be blank on Android"; fi
+          npx eas-cli build -p android --profile apk --non-interactive --wait --json > android.json
+          node -e "const b=require('./android.json')[0]; console.log('APK_URL=' + (b.artifacts && (b.artifacts.applicationArchiveUrl || b.artifacts.buildUrl))); console.log('BUILD_PAGE=https://expo.dev/accounts/fiskaren/projects/knacka/builds/' + b.id)"

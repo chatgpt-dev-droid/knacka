@@ -40,8 +40,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Knacka använder din position för att visa var du är på kartan och, när du har startat arbetsdagen, spara din rutt så att teamet ser vilka gator som är besökta.",
-          "locationWhenInUsePermission": "Knacka använder din position för att visa var du är på kartan och fylla i adressen när du sätter en nål.",
+          "locationAlwaysAndWhenInUsePermission": "KnockKnock använder din position för att visa var du är på kartan och, när du har startat arbetsdagen, spara din rutt så att teamet ser vilka gator som är besökta.",
+          "locationWhenInUsePermission": "KnockKnock använder din position för att visa var du är på kartan och fylla i adressen när du sätter en nål.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
@@ -57,6 +57,15 @@
     "experiments": {
       "typedRoutes": false
     },
-    "runtimeVersion": "exposdk:58.0.0"
+    "runtimeVersion": "exposdk:58.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "6469b85f-eefd-4668-8e5a-725bc5ba4f04"
+      }
+    },
+    "owner": "fiskaren",
+    "updates": {
+      "url": "https://u.expo.dev/6469b85f-eefd-4668-8e5a-725bc5ba4f04"
+    }
   }
 }

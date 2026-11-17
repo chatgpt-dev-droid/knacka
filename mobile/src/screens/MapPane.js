@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { View, Text, Pressable, TextInput, FlatList, StyleSheet, Keyboard, Alert, PanResponder, Animated } from 'react-native';
+import { View, Text, Pressable, TextInput, FlatList, StyleSheet, Keyboard, Alert, PanResponder, Animated, Platform, PixelRatio } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, { Polyline as SvgLine } from 'react-native-svg';
 import MapView, { Polygon, Polyline, Marker, PROVIDER_DEFAULT } from 'react-native-maps';
@@ -35,6 +35,7 @@ export default function MapPane({ filter, focus, placeSignal }) {
   const { leads, S, here, user, me, isChef, live, areas, newLeadAt, setStatus, showToast, users } = useApp();
   const map = useRef(null);
   const [region, setRegion] = useState(null);
+  const regionRef = useRef(null); const boxRef = useRef({ w: 390, h: 600 });
   const [sel, setSel] = useState(null);
   const [placing, setPlacing] = useState(false);
   // press and hold on the map: a wheel of statuses opens, and the one you tap becomes a new pin right there
@@ -42,7 +43,8 @@ export default function MapPane({ filter, focus, placeSignal }) {
   const [box, setBox] = useState({ w: 390, h: 600 });
   const pop = useRef(new Animated.Value(0)).current;
   const openWheel = (e) => {
-    const n = e?.nativeEvent; if (!n?.coordinate || !n.position || lasso || shape || placing) return;
+    const n0 = e?.nativeEvent; if (!n0?.coordinate || !n0.position || lasso || shape || placing) return;
+    const k = Platform.OS === 'android' ? PixelRatio.get() : 1; const n = { ...n0, position: { x: n0.position.x / k, y: n0.position.y / k } };
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     const m = WHEEL_R + 28;
     setSel(null); setSearching(false);
@@ -134,7 +136,11 @@ export default function MapPane({ filter, focus, placeSignal }) {
       if (pts.length < 8 || !map.current) return;
       const step = Math.max(1, Math.floor(pts.length / 70));
       try {
-        const coords = await Promise.all(pts.filter((_, i) => i % step === 0).map((p) => map.current.coordinateForPoint(p)));
+        const few = pts.filter((_, i) => i % step === 0); const rg = regionRef.current, bx = boxRef.current;
+        // Android: convert screen points from the visible region (the native call there expects pixels)
+        const coords = Platform.OS === 'android' && rg
+          ? few.map((p) => ({ latitude: rg.latitude + rg.latitudeDelta * (0.5 - p.y / bx.h), longitude: rg.longitude + rg.longitudeDelta * (p.x / bx.w - 0.5) }))
+          : await Promise.all(few.map((p) => map.current.coordinateForPoint(p)));
         setShape(coords); setLasso(false); setSel(null);
       } catch (err) { showToast(t('err_gen')); }
     },
@@ -162,10 +168,10 @@ export default function MapPane({ filter, focus, placeSignal }) {
   const nameFor = (uid) => (users.find((u) => u.id === uid) || {}).name || '';
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg }} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+    <View style={{ flex: 1, backgroundColor: C.bg }} onLayout={(e) => { const b = { w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height }; boxRef.current = b; setBox(b); }}>
       <MapView ref={map} style={StyleSheet.absoluteFill} provider={PROVIDER_DEFAULT} initialRegion={STHLM}
         mapType={sat ? 'hybrid' : 'standard'} showsUserLocation showsMyLocationButton={false} showsPointsOfInterest={false} showsBuildings toolbarEnabled={false}
-        onRegionChangeComplete={setRegion} onLongPress={openWheel} onPanDrag={() => { if (wheel) setWheel(null); }} onPress={(e) => { if (e?.nativeEvent?.action === 'marker-press') return; if (sel) setSel(null); setSearching(false); Keyboard.dismiss(); }} rotateEnabled={false} pitchEnabled={false}>
+        onRegionChangeComplete={(r) => { regionRef.current = r; setRegion(r); }} onLongPress={openWheel} onPanDrag={() => { if (wheel) setWheel(null); }} onPress={(e) => { if (e?.nativeEvent?.action === 'marker-press') return; if (sel) setSel(null); setSearching(false); Keyboard.dismiss(); }} rotateEnabled={false} pitchEnabled={false}>
         {filter.areas ? areas.filter((a) => a.poly.length > 2).map((a) => (
           <Polygon key={a.id} coordinates={a.poly.map(([la, lo]) => ({ latitude: la, longitude: lo }))} strokeColor={a.color || C.accent} fillColor={(a.color || '#0b6e7f') + '1f'} strokeWidth={2} tappable={false} />
         )) : null}

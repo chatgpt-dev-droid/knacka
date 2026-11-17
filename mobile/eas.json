@@ -18,6 +18,14 @@
       "autoIncrement": true,
       "credentialsSource": "local",
       "ios": {}
+    },
+    "apk": {
+      "distribution": "internal",
+      "channel": "production",
+      "environment": "production",
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {
