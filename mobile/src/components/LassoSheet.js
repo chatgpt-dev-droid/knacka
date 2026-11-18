@@ -43,6 +43,9 @@ export default function LassoSheet({ leads, poly, onClose, onRoute }) {
     setBusy(false);
   };
   const assign = () => pick && batch((b, ref) => b.set(ref, { owner: pick, hist: arrayUnion({ t: Date.now(), rep: user.uid, type: 'assign', to: pick }), updated: Date.now() }, { merge: true }), `${chosen.length} ${t('leadsW')} ✓`);
+  // share = the seller may see and work these leads until the chef takes them back; owner stays the same
+  const share = () => pick && batch((b, ref) => b.set(ref, { shared: arrayUnion(pick), hist: arrayUnion({ t: Date.now(), rep: user.uid, type: 'share', to: pick }), updated: Date.now() }, { merge: true }), `${chosen.length} ${t('leadsW')} ✓`);
+  const unshare = () => batch((b, ref) => b.set(ref, { shared: [], updated: Date.now() }, { merge: true }), `${chosen.length} ${t('leadsW')} ✓`);
   const change = () => pick && batch((b, ref) => b.set(ref, { status: pick, hist: arrayUnion({ t: Date.now(), rep: user.uid, s: pick }), updated: Date.now() }, { merge: true }), `${chosen.length} ${t('leadsW')} ✓`);
   const del = () => {
     const mine = isChef ? chosen : chosen.filter((l) => l.owner === user.uid);
@@ -145,7 +148,12 @@ export default function LassoSheet({ leads, poly, onClose, onRoute }) {
               );
             })}
           </ScrollView>
-          {view === 'assign' ? (
+          {view === 'share' ? (
+            <>
+              <View style={st.sub}><Pressable hitSlop={10} onPress={() => { setView('main'); setPick(null); }}><Text style={[st.red, { fontWeight: '800' }]}>{t('cancel')}</Text></Pressable><Text style={st.subT}>{t('shareWith')}</Text><Pressable hitSlop={10} onPress={share} disabled={!pick || busy}><Text style={[st.red, { fontWeight: '800' }, !pick && { opacity: 0.4 }]}>{t('shareGo')}</Text></Pressable></View>
+              {UserList({ value: pick, onPick: setPick })}
+            </>
+          ) : view === 'assign' ? (
             <>
               <View style={st.sub}><Pressable hitSlop={10} onPress={() => { setView('main'); setPick(null); }}><Text style={[st.red, { fontWeight: '800' }]}>{t('cancel')}</Text></Pressable><Text /><Pressable hitSlop={10} onPress={assign} disabled={!pick}><Text style={[st.red, { fontWeight: '800' }, !pick && { opacity: 0.4 }]}>{t('done')}</Text></Pressable></View>
               {UserList({ value: pick, onPick: setPick })}
@@ -176,12 +184,14 @@ export default function LassoSheet({ leads, poly, onClose, onRoute }) {
             </>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.acts}>
-              <Act icon="share" label={t('createArea')} onPress={() => setView('area')} />
-              <Act icon="users" label={t('assignLeads')} on={!!chosen.length} onPress={() => { setPick(null); setView('assign'); }} />
+              {isChef ? <Act icon="share" label={t('createArea')} onPress={() => setView('area')} /> : null}
+              {isChef ? <Act icon="eye" label={t('shareLeads')} on={!!chosen.length} onPress={() => { setPick(null); setView('share'); }} /> : null}
+              {isChef ? <Act icon="eyeOff" label={t('unshareLeads')} on={!!chosen.length} onPress={unshare} /> : null}
+              {isChef ? <Act icon="users" label={t('assignLeads')} on={!!chosen.length} onPress={() => { setPick(null); setView('assign'); }} /> : null}
               <Act icon="star" label={t('changeStatus2')} on={!!chosen.length} onPress={() => { setPick(null); setView('status'); }} />
               <Act icon="chat" label={t('sendSms2')} on={!!withPhone.length} onPress={() => setView('sms')} />
               <Act icon="route" label={t('createRoute')} on={!!chosen.length} onPress={route} />
-              <Act icon="trash" label={t('deleteLeads')} on={!!chosen.length} onPress={del} />
+              {isChef ? <Act icon="trash" label={t('deleteLeads')} on={!!chosen.length} onPress={del} /> : null}
             </ScrollView>
           )}
         </>

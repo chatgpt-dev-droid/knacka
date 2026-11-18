@@ -41,7 +41,7 @@ export default function LeadDetail() {
   if (!lead) return <View style={{ flex: 1, paddingTop: ins.top + 20, alignItems: 'center' }}><Pressable onPress={() => router.back()}><Text style={{ color: C.red, fontWeight: '800' }}>{t('cancel')}</Text></Pressable></View>;
   const val = (k) => (draft[k] !== undefined ? draft[k] : lead[k] || '');
   const s = S.st(lead.status);
-  const canDel = isChef || lead.owner === user.uid;
+  const canDel = isChef;
   const pickAppt = () => picker.open('datetime', lead.meeting || Date.now() + DAY, t('setAppt'), (d) => setMeeting(lead, d.getTime()));
 
   const events = [

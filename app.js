@@ -307,14 +307,18 @@ function startData(){
   stopData();
   initMap();
   dataUnsubs.push(db.collection("users").onSnapshot(q=>{S.users=q.docs.map(d=>Object.assign({id:d.id},d.data()));renderTab();drawAreas()},e=>console.error(e)));
-  dataUnsubs.push(db.collection("leads").onSnapshot(q=>{
+  // a seller gets their own leads plus the ones the chef shares with them (two queries merged)
+  const parts={own:[],shared:[]};
+  const leadsSrc=isChef()?[db.collection("leads")]:[db.collection("leads").where("owner","==",S.uid),db.collection("leads").where("shared","array-contains",S.uid)];
+  leadsSrc.forEach((src,ix)=>dataUnsubs.push(src.onSnapshot(q0=>{
+    let q=q0;if(!isChef()){parts[ix?"shared":"own"]=q0.docs;const m=new Map();parts.own.concat(parts.shared).forEach(d=>m.set(d.id,d));q={docs:[...m.values()]}}
     const byId=new Map(S.leads.map(l=>[l.id,l]));
     S.leads=q.docs.map(d=>{const data=d.data();data.hist=data.hist||[];const ex=byId.get(d.id);
       if(ex){Object.keys(ex).forEach(k=>{if(k!=="id"&&!(k in data))delete ex[k]});Object.assign(ex,data);if(pend&&pend.l===ex)Object.assign(ex,pend.patch);return ex}
       return Object.assign({id:d.id},data)});
     if(openId){const ae=document.activeElement;if(!ae||!/INPUT|TEXTAREA|SELECT/.test(ae.tagName))rerenderLead(openId)}
     drawPins();drawAddresses();statStrip();if(tab!=="map"&&tab!=="more"&&$("sheet").hidden){const y=$("v-"+tab).scrollTop;renderTab();$("v-"+tab).scrollTop=y}
-  },e=>console.error(e)));
+  },e=>console.error(e))));
   dataUnsubs.push(db.collection("areas").onSnapshot(q=>{S.areas=q.docs.map(d=>{const x=d.data();return {id:d.id,name:x.name,rep:x.rep,color:x.color,poly:(x.poly||[]).map(p=>[p.lat,p.lng])}});drawAreas();if(tab==="more")moreView()},e=>console.error(e)));
   dataUnsubs.push(db.collection("settings").doc("main").onSnapshot(s=>{const d=s.data()||{};S.tmpl=d.tmpl||null;S.tmplNH=d.tmplNH||null;S.elksFrom=d.elksFrom||"";S.aiSmsOn=d.aiSmsOn!==false;S.aiInfo=d.aiInfo||null;S.statuses=Array.isArray(d.statuses)&&d.statuses.length?d.statuses:null;Object.values(markers).forEach(m=>m.__k=null);drawPins();if(tab==="more")moreView()},e=>console.error(e)));
   locate(false);
@@ -592,7 +596,7 @@ function infoTab(l){
       <div class="chips">${[1,2,4,8].map(w=>{const d=dstr(new Date(Date.now()+w*7*DAY));return `<button class="chip" data-rev="${d}" aria-pressed="${l.revisit===d}">${t("w"+w)}</button>`}).join("")}<button class="chip" id="revClear">${t("clear")}</button></div>
       <input type="date" id="f_rev" value="${l.revisit||""}" aria-label="${t("revisit")}">
       ${l.revisit?`<div class="chips"><a class="chip" href="${gcalUrl(l,"igen")}" target="_blank" rel="noopener">${t("gcal")}</a><a class="chip" href="${icsHref(l,"igen")}" download="aterbesok.ics">${t("ical")}</a></div>`:""}</section>
-    ${(isChef()||l.owner===S.uid)?`<section class="dsec" id="delWrap"><button class="btn danger" id="delBtn">${svgI("trash",18)} ${t("del")}</button></section>`:""}`;
+    ${isChef()?`<section class="dsec" id="delWrap"><button class="btn danger" id="delBtn">${svgI("trash",18)} ${t("del")}</button></section>`:""}`;
 }
 function bindInfo(root,l){
   const bt=(id,key)=>{const e=$(id);if(!e)return;e.addEventListener("input",()=>queueSave(l,key,e.value));e.addEventListener("blur",flushSave)};

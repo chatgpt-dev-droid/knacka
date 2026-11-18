@@ -21,8 +21,19 @@ service cloud.firestore {
       allow delete: if chef();
     }
     match /leads/{id} {
-      allow read, create, update: if active();
-      allow delete: if chef() || (active() && resource.data.owner == request.auth.uid);
+      // a seller sees and works only leads they own or that the chef has shared with them,
+      // cannot change who owns or sees a lead, and cannot delete
+      function mineOrShared() {
+        return resource.data.get('owner', '') == request.auth.uid
+          || request.auth.uid in resource.data.get('shared', []);
+      }
+      allow read: if chef() || (active() && mineOrShared());
+      allow create: if chef() || (active() && request.resource.data.owner == request.auth.uid
+        && request.resource.data.get('shared', []).size() == 0);
+      allow update: if chef() || (active() && mineOrShared()
+        && request.resource.data.get('owner', '') == resource.data.get('owner', '')
+        && request.resource.data.get('shared', []) == resource.data.get('shared', []));
+      allow delete: if chef();
     }
     match /areas/{id} {
       allow read: if active();

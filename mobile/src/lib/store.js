@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, doc, onSnapshot, setDoc, getDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, doc, onSnapshot, setDoc, getDoc, deleteDoc, arrayUnion, arrayRemove, query, where } from 'firebase/firestore';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -70,18 +70,29 @@ export function AppProvider({ children }) {
   }, []);
 
   // ---------- live data ----------
+  const toLead = (d) => { const x = { id: d.id, ...d.data() }; x.hist = x.hist || []; return x; };
   useEffect(() => {
     if (phase !== 'ready') return undefined;
     const offs = [
       onSnapshot(collection(db, 'users'), (q) => setUsers(q.docs.map((d) => ({ id: d.id, ...d.data() })))),
-      onSnapshot(collection(db, 'leads'), (q) => setLeads(q.docs.map((d) => { const x = { id: d.id, ...d.data() }; x.hist = x.hist || []; return x; }))),
+      // the chef gets every lead; a seller only the ones they own plus the ones the chef shares with them
+      ...(me?.role === 'chef'
+        ? [onSnapshot(collection(db, 'leads'), (q) => setLeads(q.docs.map(toLead)))]
+        : (() => {
+          const parts = { own: [], shared: [] };
+          const push = (k) => (q) => { parts[k] = q.docs.map(toLead); const m = new Map(); [...parts.own, ...parts.shared].forEach((l) => m.set(l.id, l)); setLeads([...m.values()]); };
+          return [
+            onSnapshot(query(collection(db, 'leads'), where('owner', '==', user.uid)), push('own'), () => {}),
+            onSnapshot(query(collection(db, 'leads'), where('shared', 'array-contains', user.uid)), push('shared'), () => {}),
+          ];
+        })()),
       onSnapshot(collection(db, 'areas'), (q) => setAreas(q.docs.map((d) => { const x = d.data(); return { id: d.id, name: x.name, rep: x.rep, color: x.color, poly: (x.poly || []).map((p) => [p.lat, p.lng]) }; }))),
       onSnapshot(doc(db, 'settings', 'main'), (s) => setSettings(s.data() || {})),
     ];
     // only the chef follows the team's live positions
     if (me?.role === 'chef') offs.push(onSnapshot(collection(db, 'live'), (q) => setLive(q.docs.map((d) => ({ id: d.id, ...d.data() }))), () => {}));
     return () => offs.forEach((f) => f());
-  }, [phase, me?.role]);
+  }, [phase, me?.role, user?.uid]);
 
   // ---------- my position (foreground) ----------
   useEffect(() => {
